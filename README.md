@@ -5,12 +5,11 @@ Created by 753, Ported by 56 and Theodore
 ## Feature List
 
 + Changes your character from melee to ranged
++ Nail damage drastically decreased
 + SOUL regenerates passively instead of from hitting enemies
-+ Nail damage drastically decreased, ranged attacks deal 3+3*upgrades
-+ Adds several new charms that augment your ranged abilities and more
-+ Start out with only 4 HP and 1 extra charm notch!
-+ Secrets!
-+ Empress Muzznik!
++ Start out with 4 HP and 4 charm notches
++ New powerful charms that augment your ranged abilities
++ And more...
 
 ## Installation Instructions
 
