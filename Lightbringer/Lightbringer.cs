@@ -60,7 +60,7 @@ namespace Lightbringer
 
         public override string GetVersion()
         {
-            return "v1.3";
+            return "v1.30";
         }
 
         public override void Initialize()
