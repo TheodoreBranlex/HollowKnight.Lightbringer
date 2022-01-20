@@ -92,7 +92,9 @@ namespace Lightbringer
         private void OnDestroy()
         {
             _minion.GetComponent<HealthManager>().hp = 1;
-            for (int i = 0; i < 12; i++) _minions[i].GetComponent<HealthManager>().hp = 1;
+            for (int i = 0; i < 12; i++)
+                if (_minions[i] != null)
+                    GetComponent<HealthManager>().hp = 1;
         }
     }
 }
