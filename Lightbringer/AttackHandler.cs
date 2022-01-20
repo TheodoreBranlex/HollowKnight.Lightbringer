@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using GlobalEnums;
-using Vasi;
+using Modding;
 using UnityEngine;
 using static Lightbringer.AttackHandler.BeamDirection;
 using Random = System.Random;
@@ -14,8 +14,8 @@ namespace Lightbringer
 
         private static GameObject GrubberFlyBeam
         {
-            get => Mirror.GetField<HeroController, GameObject>(HeroController.instance, "grubberFlyBeam");
-            set => Mirror.SetField(HeroController.instance, "grubberFlyBeam", value);
+            get => ReflectionHelper.GetField<HeroController, GameObject>(HeroController.instance, "grubberFlyBeam");
+            set => ReflectionHelper.SetField(HeroController.instance, "grubberFlyBeam", value);
         }
 
         private bool _crit;
@@ -73,18 +73,18 @@ namespace Lightbringer
             int lanceDamage = pd.beamDamage;
 
             // QUICK SLASH CHARM #REEE32
-            Mirror.SetField(hc, "attackDuration", pd.equippedCharm_32 ? hc.ATTACK_DURATION_CH : hc.ATTACK_DURATION);
+            ReflectionHelper.SetField(hc, "attackDuration", pd.equippedCharm_32 ? hc.ATTACK_DURATION_CH : hc.ATTACK_DURATION);
 
             // Handle audio
             if (dir == AttackDirection.normal || (dir == AttackDirection.upward && pd.equippedCharm_8))
             {
                 if (BeamAudioClip == null)
                 {
-                    GameObject BeamPrefabGameObject = Mirror.GetField<HeroController, GameObject>(hc, "grubberFlyBeamPrefabU");
+                    GameObject BeamPrefabGameObject = ReflectionHelper.GetField<HeroController, GameObject>(hc, "grubberFlyBeamPrefabU");
                     AudioSource BeamAudio = BeamPrefabGameObject.GetComponent<AudioSource>();
                     BeamAudioClip = BeamAudio.clip;
                 }
-                Mirror.GetField<HeroController, AudioSource>(hc, "audioSource").PlayOneShot(BeamAudioClip, 0.1f);
+                ReflectionHelper.GetField<HeroController, AudioSource>(hc, "audioSource").PlayOneShot(BeamAudioClip, 0.1f);
             }
             
             // Fragile Nightmare damage calculations
@@ -102,12 +102,12 @@ namespace Lightbringer
                 pd.nailDamage = pd.beamDamage; 
                 PlayMakerFSM.BroadcastEvent("UPDATE NAIL DAMAGE");
                 pd.beamDamage = lanceDamage;
-                Mirror.SetField(hc, "wallSlashing", true);
+                ReflectionHelper.SetField(hc, "wallSlashing", true);
                 SpawnBeam(!hc.cState.facingRight, 1f, 1f);
                 return;
             }
 
-            Mirror.SetField(hc, "wallSlashing", false);
+            ReflectionHelper.SetField(hc, "wallSlashing", false);
             switch (dir)
             {
                 #region Normal Attack
@@ -119,7 +119,7 @@ namespace Lightbringer
                     pd.beamDamage = lanceDamage;
 
                     hc.normalSlashFsm.FsmVariables.GetFsmFloat("direction").Value = hc.cState.facingRight ? 0f : 180f;
-                    Mirror.SetField(hc, "slashComponent", hc.normalSlash);
+                    ReflectionHelper.SetField(hc, "slashComponent", hc.normalSlash);
 
                     hc.normalSlash.StartSlash();
 
@@ -135,7 +135,7 @@ namespace Lightbringer
                         }
                         else
                         {
-                            Mirror.GetField<HeroController, AudioSource>(hc, "audioSource").PlayOneShot(hc.blockerImpact, 1f);
+                            ReflectionHelper.GetField<HeroController, AudioSource>(hc, "audioSource").PlayOneShot(hc.blockerImpact, 1f);
                         }
 
                         return;
@@ -245,11 +245,11 @@ namespace Lightbringer
                         }
                     }
 
-                    Mirror.SetField(hc, "slashComponent", hc.upSlash);
-                    Mirror.SetField(hc, "slashFsm", hc.upSlashFsm);
+                    ReflectionHelper.SetField(hc, "slashComponent", hc.upSlash);
+                    ReflectionHelper.SetField(hc, "slashFsm", hc.upSlashFsm);
                     hc.cState.upAttacking = true;
                     hc.upSlashFsm.FsmVariables.GetFsmFloat("direction").Value = 90f;
-                    Mirror.GetField<HeroController, NailSlash>(hc, "slashComponent").StartSlash();
+                    ReflectionHelper.GetField<HeroController, NailSlash>(hc, "slashComponent").StartSlash();
                     break;
 
                 #endregion
@@ -257,11 +257,11 @@ namespace Lightbringer
                 #region Down
 
                 case AttackDirection.downward:
-                    Mirror.SetField(hc, "slashComponent", hc.downSlash);
-                    Mirror.SetField(hc, "slashFsm", hc.downSlashFsm);
+                    ReflectionHelper.SetField(hc, "slashComponent", hc.downSlash);
+                    ReflectionHelper.SetField(hc, "slashFsm", hc.downSlashFsm);
                     hc.cState.downAttacking = true;
                     hc.downSlashFsm.FsmVariables.GetFsmFloat("direction").Value = 270f;
-                    Mirror.GetField<HeroController, NailSlash>(hc, "slashComponent").StartSlash();
+                    ReflectionHelper.GetField<HeroController, NailSlash>(hc, "slashComponent").StartSlash();
                     break;
 
                 #endregion
@@ -284,7 +284,7 @@ namespace Lightbringer
             
             pd.beamDamage *= 3;
             hc.shadowRingPrefab.Spawn(hc.transform.position);
-            Mirror.GetField<HeroController, AudioSource>(hc, "audioSource").PlayOneShot(hc.nailArtChargeComplete, 1f);
+            ReflectionHelper.GetField<HeroController, AudioSource>(hc, "audioSource").PlayOneShot(hc.nailArtChargeComplete, 1f);
 
             return true;
         }
@@ -437,7 +437,7 @@ namespace Lightbringer
 
             HeroController hc = HeroController.instance;
 
-            GrubberFlyBeam = Mirror.GetField<HeroController, GameObject>(hc, beamPrefab).Spawn(hc.transform.position);
+            GrubberFlyBeam = ReflectionHelper.GetField<HeroController, GameObject>(hc, beamPrefab).Spawn(hc.transform.position);
             AudioSource BeamAudio = GrubberFlyBeam.GetComponent<AudioSource>();
             BeamAudio.enabled = false; // disable audio source for beams
             Transform t = hc.transform;

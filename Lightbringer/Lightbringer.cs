@@ -8,7 +8,6 @@ using System.Reflection;
 using GlobalEnums;
 using HutongGames.PlayMaker;
 using JetBrains.Annotations;
-using Vasi;
 using Modding;
 using On.HutongGames.PlayMaker.Actions;
 using UnityEngine;
@@ -272,7 +271,7 @@ namespace Lightbringer
 
             string key = "Charms." + pdbool.Substring(9, pdbool.Length - 9);
             if (Sprites.ContainsKey(key))
-                Mirror.GetField<ShopItemStats, GameObject>(self, "itemSprite").GetComponent<SpriteRenderer>().sprite = Sprites[key];
+                ReflectionHelper.GetField<ShopItemStats, GameObject>(self, "itemSprite").GetComponent<SpriteRenderer>().sprite = Sprites[key];
         }
 
         private void AfterSaveGameLoad(SaveGameData data)
@@ -315,8 +314,8 @@ namespace Lightbringer
                           .spriteCollection.spriteDefinitions[0]
                           .material.mainTexture = Sprites["Sprint"].texture;
 
-            GameObject inventory = GameManager.instance.inventoryFSM.gameObject;
-            var invNailSprite = GameObjectUtil.Child(inventory, "Inv/Inv_Items/Nail").GetComponent<InvNailSprite>();
+            var invNail = GameObject.Find("/_GameCameras/HudCamera/Inventory/Inv/Inv_Items/Nail");
+            var invNailSprite = invNail.GetComponent<InvNailSprite>();
 
             invNailSprite.level1 = Sprites["LanceInv"];
             invNailSprite.level2 = Sprites["LanceInv"];
@@ -381,18 +380,18 @@ namespace Lightbringer
 
         private void DoAttack()
         {
-            if (_origNailTerrainCheckTime == 0) _origNailTerrainCheckTime = Mirror.GetField<HeroController, float>(HeroController.instance, "NAIL_TERRAIN_CHECK_TIME");
+            if (_origNailTerrainCheckTime == 0) _origNailTerrainCheckTime = ReflectionHelper.GetField<HeroController, float>(HeroController.instance, "NAIL_TERRAIN_CHECK_TIME");
 
             if (!(HeroController.instance.vertical_input < Mathf.Epsilon) &&
                 !(HeroController.instance.vertical_input < -Mathf.Epsilon &&
                   HeroController.instance.hero_state != ActorStates.idle &&
                   HeroController.instance.hero_state != ActorStates.running))
-                Mirror.SetField(HeroController.instance, "NAIL_TERRAIN_CHECK_TIME", 0f);
+                ReflectionHelper.SetField(HeroController.instance, "NAIL_TERRAIN_CHECK_TIME", 0f);
         }
 
         private void AfterAttack(AttackDirection dir)
         {
-            Mirror.SetField(HeroController.instance, "NAIL_TERRAIN_CHECK_TIME", _origNailTerrainCheckTime);
+            ReflectionHelper.SetField(HeroController.instance, "NAIL_TERRAIN_CHECK_TIME", _origNailTerrainCheckTime);
         }
 
         private static void UpdateBlueHealth(On.PlayerData.orig_UpdateBlueHealth orig, PlayerData self)
@@ -521,9 +520,9 @@ namespace Lightbringer
         private static void StartSlash(On.NailSlash.orig_StartSlash orig, NailSlash self)
         {
             orig(self);
-            var slashFsm = Mirror.GetField<NailSlash, PlayMakerFSM>(self, "slashFsm");
+            var slashFsm = ReflectionHelper.GetField<NailSlash, PlayMakerFSM>(self, "slashFsm");
             float slashAngle = slashFsm.FsmVariables.FindFsmFloat("direction").Value;
-            var anim = Mirror.GetField<NailSlash, tk2dSpriteAnimator>(self, "anim");
+            var anim = ReflectionHelper.GetField<NailSlash, tk2dSpriteAnimator>(self, "anim");
             if (slashAngle == 0f || slashAngle == 180f)
             {
                 self.transform.localScale = new Vector3(self.scale.x * 0.32f, self.scale.y * 0.32f, self.scale.z);
@@ -532,7 +531,7 @@ namespace Lightbringer
                 return;
             }
 
-            if (Mirror.GetField<NailSlash, bool>(self, "mantis")) // burning blade
+            if (ReflectionHelper.GetField<NailSlash, bool>(self, "mantis")) // burning blade
             {
                 self.transform.localScale = new Vector3(self.scale.x * 1.35f, self.scale.y * 1.35f, self.scale.z);
                 anim.Play(self.animName + " F");
@@ -543,7 +542,7 @@ namespace Lightbringer
                 anim.Play(self.animName);
             }
 
-            if (Mirror.GetField<NailSlash, bool>(self, "fury")) anim.Play(self.animName + " F");
+            if (ReflectionHelper.GetField<NailSlash, bool>(self, "fury")) anim.Play(self.animName + " F");
         }
 
         private static int TakeHealth(int amount)
@@ -609,7 +608,7 @@ namespace Lightbringer
                 HeroController.instance.AddMPChargeSpa(1);
                 foreach (int i in new int[] {17, 19, 34, 30, 28, 22, 25})
                 {
-                    if (Mirror.GetField<PlayerData, bool>(PlayerData.instance, "equippedCharm_" + i) &&
+                    if (ReflectionHelper.GetField<PlayerData, bool>(PlayerData.instance, "equippedCharm_" + i) &&
                         (i != 25 || !PlayerData.instance.brokenCharm_25))
                         HeroController.instance.AddMPChargeSpa(1);
                 }
@@ -685,11 +684,11 @@ namespace Lightbringer
             }
             if (AttackHandler.BeamAudioClip == null)
             {
-                GameObject BeamPrefabGameObject = Mirror.GetField<HeroController, GameObject>(HeroController.instance, "grubberFlyBeamPrefabU");
+                GameObject BeamPrefabGameObject = ReflectionHelper.GetField<HeroController, GameObject>(HeroController.instance, "grubberFlyBeamPrefabU");
                 AudioSource BeamAudio = BeamPrefabGameObject.GetComponent<AudioSource>();
                 AttackHandler.BeamAudioClip = BeamAudio.clip;
             }
-            Mirror.GetField<HeroController, AudioSource>(HeroController.instance, "audioSource").PlayOneShot(AttackHandler.BeamAudioClip, 0.1f);
+            ReflectionHelper.GetField<HeroController, AudioSource>(HeroController.instance, "audioSource").PlayOneShot(AttackHandler.BeamAudioClip, 0.1f);
         }
     }
 }

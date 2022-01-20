@@ -18,9 +18,6 @@
 		<Reference Include="MMHOOK_Assembly-CSharp">
 			<HintPath>..\Libraries\MMHOOK_Assembly-CSharp.dll</HintPath>
 		</Reference>
-		<Reference Include="Vasi">
-			<HintPath>..\Libraries\Vasi.dll</HintPath>
-		</Reference>
         <Reference Include="PlayMaker">
             <HintPath>..\Libraries\PlayMaker.dll</HintPath>
         </Reference>
