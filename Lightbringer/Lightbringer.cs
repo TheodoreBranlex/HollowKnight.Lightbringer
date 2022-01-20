@@ -8,8 +8,7 @@ using System.Reflection;
 using GlobalEnums;
 using HutongGames.PlayMaker;
 using JetBrains.Annotations;
-using ModCommon;
-using ModCommon.Util;
+using Vasi;
 using Modding;
 using On.HutongGames.PlayMaker.Actions;
 using UnityEngine;
@@ -17,7 +16,6 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 using Random = System.Random;
-using SetSpriteRendererSprite = HutongGames.PlayMaker.Actions.SetSpriteRendererSprite;
 using USceneManager = UnityEngine.SceneManagement.SceneManager;
 
 // ReSharper disable CompareOfFloatsByEqualityOperator
@@ -25,7 +23,7 @@ using USceneManager = UnityEngine.SceneManagement.SceneManager;
 namespace Lightbringer
 {
     [UsedImplicitly]
-    public partial class Lightbringer : Mod, ITogglableMod
+    public partial class Lightbringer : Mod, ITogglableMod, IGlobalSettings<LightbringerSettings>
     {
         private const float ORIG_RUN_SPEED = 8.3f;
         private const float ORIG_RUN_SPEED_CH = 12f;
@@ -56,43 +54,19 @@ namespace Lightbringer
 
         public static SpriteFlash _SpriteFlash;
 
-        public LightbringerSettings Settings { get; set; } = new LightbringerSettings();
-
-        public override ModSettings GlobalSettings
-        {
-            get => Settings = Settings ?? new LightbringerSettings();
-            set => Settings = value is LightbringerSettings settings ? settings : Settings;
-        }
+        public LightbringerSettings Settings = new LightbringerSettings();
+        public void OnLoadGlobal(LightbringerSettings s) => Settings = s;
+        public LightbringerSettings OnSaveGlobal() => Settings;
 
         public override string GetVersion()
         {
-            return "v1.21";
+            return "v1.3";
         }
 
         public override void Initialize()
         {
             Instance = this;
-            try
-            {
-                RegisterCallbacks();
-            }
-            catch
-            {
-                CreateCanvas();
-                _textObj.text = "Lightbringer requires ModCommon to function! Install it!";
-                _textObj.CrossFadeAlpha(1f, 0f, false);
-            }
-
-            // Config doesn't auto generate unless you do this
-            Settings.BaseBeamDamage = Settings.BaseBeamDamage;
-            Settings.UpgradeBeamDamage = Settings.UpgradeBeamDamage;
-            Settings.RadiantJewelDamage = Settings.RadiantJewelDamage;
-            Settings.FragileNightmareScaleFactor = Settings.FragileNightmareScaleFactor;
-            Settings.FragileNightmareSoulCost = Settings.FragileNightmareSoulCost;
-            Settings.BaseNailDamage = Settings.BaseNailDamage;
-            Settings.UpgradeNailDamage = Settings.UpgradeNailDamage;
-            Settings.BurningPrideScaleFactor = Settings.BurningPrideScaleFactor;
-            Settings.SoulRegenRate = Settings.SoulRegenRate;
+            RegisterCallbacks();
         }
 
         public void Unload()
@@ -107,18 +81,18 @@ namespace Lightbringer
             On.PlayerData.UpdateBlueHealth -= UpdateBlueHealth;
             On.HeroController.RecoilLeft -= RecoilLeft;
             On.HeroController.RecoilRight -= RecoilRight;
-            ModHooks.Instance.BeforeSavegameSaveHook -= BeforeSaveGameSave;
-            ModHooks.Instance.AfterSavegameLoadHook -= AfterSaveGameLoad;
-            ModHooks.Instance.SavegameSaveHook -= SaveGameSave;
-            ModHooks.Instance.NewGameHook -= OnNewGame;
-            ModHooks.Instance.TakeHealthHook -= Health;
-            ModHooks.Instance.DoAttackHook -= DoAttack;
-            ModHooks.Instance.AfterAttackHook -= AfterAttack;
-            ModHooks.Instance.TakeHealthHook -= TakeHealth;
-            ModHooks.Instance.SoulGainHook -= SoulGain;
-            ModHooks.Instance.HeroUpdateHook -= Update;
-            ModHooks.Instance.CharmUpdateHook -= CharmUpdate;
-            ModHooks.Instance.LanguageGetHook -= LangGet;
+            ModHooks.BeforeSavegameSaveHook -= BeforeSaveGameSave;
+            ModHooks.AfterSavegameLoadHook -= AfterSaveGameLoad;
+            ModHooks.SavegameSaveHook -= SaveGameSave;
+            ModHooks.NewGameHook -= OnNewGame;
+            ModHooks.TakeHealthHook -= Health;
+            ModHooks.DoAttackHook -= DoAttack;
+            ModHooks.AfterAttackHook -= AfterAttack;
+            ModHooks.TakeHealthHook -= TakeHealth;
+            ModHooks.SoulGainHook -= SoulGain;
+            ModHooks.HeroUpdateHook -= Update;
+            ModHooks.CharmUpdateHook -= CharmUpdate;
+            ModHooks.LanguageGetHook -= LangGet;
             USceneManager.sceneLoaded -= SceneLoadedHook;
 
             if (PlayerData.instance != null)
@@ -134,7 +108,6 @@ namespace Lightbringer
         {
             if (_canvas != null) return;
 
-            CanvasUtil.CreateFonts();
             _canvas = CanvasUtil.CreateCanvas(RenderMode.ScreenSpaceOverlay, new Vector2(1920, 1080));
             Object.DontDestroyOnLoad(_canvas);
 
@@ -191,42 +164,42 @@ namespace Lightbringer
             // Charm Values 
             // Restore Nail Damage 
             // SPRITES!
-            ModHooks.Instance.BeforeSavegameSaveHook += BeforeSaveGameSave;
-            ModHooks.Instance.AfterSavegameLoadHook += AfterSaveGameLoad;
-            ModHooks.Instance.SavegameSaveHook += SaveGameSave;
+            ModHooks.BeforeSavegameSaveHook += BeforeSaveGameSave;
+            ModHooks.AfterSavegameLoadHook += AfterSaveGameLoad;
+            ModHooks.SavegameSaveHook += SaveGameSave;
 
             // Notches/HP
-            ModHooks.Instance.NewGameHook += OnNewGame;
+            ModHooks.NewGameHook += OnNewGame;
 
             // Panic Compass
-            ModHooks.Instance.BeforeAddHealthHook += Health;
-            ModHooks.Instance.TakeHealthHook += Health;
+            ModHooks.BeforeAddHealthHook += Health;
+            ModHooks.TakeHealthHook += Health;
 
             // Don't hit walls w/ lances
-            ModHooks.Instance.DoAttackHook += DoAttack;
-            ModHooks.Instance.AfterAttackHook += AfterAttack;
+            ModHooks.DoAttackHook += DoAttack;
+            ModHooks.AfterAttackHook += AfterAttack;
 
             // Glass Soul
-            ModHooks.Instance.TakeHealthHook += TakeHealth;
+            ModHooks.TakeHealthHook += TakeHealth;
 
             // Disable Soul Gain 
             // Bloodlust
-            ModHooks.Instance.SoulGainHook += SoulGain;
+            ModHooks.SoulGainHook += SoulGain;
 
             // Soul Gen 
             // 753/56 Easter Egg 
             // Nailmaster's Passion 
             // Add Muzznik & DoubleKin Behaviours
-            ModHooks.Instance.HeroUpdateHook += Update;
+            ModHooks.HeroUpdateHook += Update;
 
             // Beam Damage 
             // Timescale 
             // Panic Compass 
             // Tiny Shell
-            ModHooks.Instance.CharmUpdateHook += CharmUpdate;
+            ModHooks.CharmUpdateHook += CharmUpdate;
 
             // Custom Text
-            ModHooks.Instance.LanguageGetHook += LangGet;
+            ModHooks.LanguageGetHook += LangGet;
 
             // Lance Textures 
             // Canvas for Muzznik Text Soul Orb FSM
@@ -238,11 +211,11 @@ namespace Lightbringer
             Stopwatch overall = Stopwatch.StartNew();
             foreach (string res in _asm.GetManifestResourceNames())
             {
-                // if (!res.EndsWith(".png") && !res.EndsWith(".tex"))
-                // {
-                //     Log("Unknown resource: " + res);
-                //     continue;
-                // }
+                if (!res.EndsWith(".png") && !res.EndsWith(".tex"))
+                {
+                    Log("Unknown resource: " + res);
+                    continue;
+                }
 
                 using (Stream s = _asm.GetManifestResourceStream(res))
                 {
@@ -252,7 +225,7 @@ namespace Lightbringer
                     s.Read(buffer, 0, buffer.Length);
                     s.Dispose();
 
-                    //Create texture from bytes 
+                    // Create texture from bytes 
                     var tex = new Texture2D(2, 2);
 
                     tex.LoadImage(buffer, true);
@@ -299,7 +272,7 @@ namespace Lightbringer
 
             string key = "Charms." + pdbool.Substring(9, pdbool.Length - 9);
             if (Sprites.ContainsKey(key))
-                self.GetAttr<GameObject>("itemSprite").GetComponent<SpriteRenderer>().sprite = Sprites[key];
+                Mirror.GetField<ShopItemStats, GameObject>(self, "itemSprite").GetComponent<SpriteRenderer>().sprite = Sprites[key];
         }
 
         private void AfterSaveGameLoad(SaveGameData data)
@@ -326,30 +299,24 @@ namespace Lightbringer
 
             CharmIconList.Instance.unbreakableStrength = Sprites["Charms.ustr"];
 
-            GameManager.instance.inventoryFSM.gameObject.FindGameObjectInChildren("25")
-                       .LocateMyFSM("charm_show_if_collected")
-                       .GetAction<SetSpriteRendererSprite>("Glass Attack", 2)
-                       .sprite
-                       .Value = Sprites["Charms.brokestr"];
-
             HeroController.instance.grubberFlyBeamPrefabL.GetComponent<tk2dSprite>()
                           .GetCurrentSpriteDef()
                           .material
                           .mainTexture = Sprites["Lances"].texture;
 
-            //HeroController.instance.gameObject.GetComponent<tk2dSprite>()
-            //              .GetCurrentSpriteDef()
-            //              .material
-            //              .mainTexture = Sprites["Knight"].texture;
+            HeroController.instance.gameObject.GetComponent<tk2dSprite>()
+                          .GetCurrentSpriteDef()
+                          .material
+                          .mainTexture = Sprites["Knight"].texture;
 
-            //HeroController.instance.gameObject.GetComponent<tk2dSpriteAnimator>()
-            //              .GetClipByName("Sprint")
-            //              .frames[0]
-            //              .spriteCollection.spriteDefinitions[0]
-            //              .material.mainTexture = Sprites["Sprint"].texture;
+            HeroController.instance.gameObject.GetComponent<tk2dSpriteAnimator>()
+                          .GetClipByName("Sprint")
+                          .frames[0]
+                          .spriteCollection.spriteDefinitions[0]
+                          .material.mainTexture = Sprites["Sprint"].texture;
 
-            var invNailSprite = GameManager.instance.inventoryFSM.gameObject.FindGameObjectInChildren("Nail")
-                                           .GetComponent<InvNailSprite>();
+            GameObject inventory = GameManager.instance.inventoryFSM.gameObject;
+            var invNailSprite = GameObjectUtil.Child(inventory, "Inv/Inv_Items/Nail").GetComponent<InvNailSprite>();
 
             invNailSprite.level1 = Sprites["LanceInv"];
             invNailSprite.level2 = Sprites["LanceInv"];
@@ -414,34 +381,28 @@ namespace Lightbringer
 
         private void DoAttack()
         {
-            if (_origNailTerrainCheckTime == 0) _origNailTerrainCheckTime = HeroController.instance.GetAttr<float>("NAIL_TERRAIN_CHECK_TIME");
+            if (_origNailTerrainCheckTime == 0) _origNailTerrainCheckTime = Mirror.GetField<HeroController, float>(HeroController.instance, "NAIL_TERRAIN_CHECK_TIME");
 
             if (!(HeroController.instance.vertical_input < Mathf.Epsilon) &&
-                !(HeroController.instance.vertical_input < -Mathf.Epsilon    &&
-                  HeroController.instance.hero_state     != ActorStates.idle &&
-                  HeroController.instance.hero_state     != ActorStates.running))
-                HeroController.instance.SetAttr("NAIL_TERRAIN_CHECK_TIME", 0f);
+                !(HeroController.instance.vertical_input < -Mathf.Epsilon &&
+                  HeroController.instance.hero_state != ActorStates.idle &&
+                  HeroController.instance.hero_state != ActorStates.running))
+                Mirror.SetField(HeroController.instance, "NAIL_TERRAIN_CHECK_TIME", 0f);
         }
 
         private void AfterAttack(AttackDirection dir)
         {
-            HeroController.instance.SetAttr("NAIL_TERRAIN_CHECK_TIME", _origNailTerrainCheckTime);
+            Mirror.SetField(HeroController.instance, "NAIL_TERRAIN_CHECK_TIME", _origNailTerrainCheckTime);
         }
 
         private static void UpdateBlueHealth(On.PlayerData.orig_UpdateBlueHealth orig, PlayerData self)
         {
             self.SetInt("healthBlue", 0);
-            //if (this.GetBool("equippedCharm_8")) // Make Rising Light not give 2 blue health.
-            //{
-            //    this.SetIntSwappedArgs(this.GetInt("healthBlue") + 2, "healthBlue");
-            //}
             if (self.GetBool("equippedCharm_9"))
-            {
                 self.SetInt("healthBlue", self.GetInt("healthBlue") + 4);
-            }
         }
 
-        private string LangGet(string key, string sheetTitle)
+        private string LangGet(string key, string sheetTitle, string orig)
         {
             return _langDict.TryGetValue(key, out string val) ? val : Language.Language.GetInternal(key, sheetTitle);
         }
@@ -560,9 +521,9 @@ namespace Lightbringer
         private static void StartSlash(On.NailSlash.orig_StartSlash orig, NailSlash self)
         {
             orig(self);
-            var slashFsm = self.GetAttr<PlayMakerFSM>("slashFsm");
+            var slashFsm = Mirror.GetField<NailSlash, PlayMakerFSM>(self, "slashFsm");
             float slashAngle = slashFsm.FsmVariables.FindFsmFloat("direction").Value;
-            var anim = self.GetAttr<tk2dSpriteAnimator>("anim");
+            var anim = Mirror.GetField<NailSlash, tk2dSpriteAnimator>(self, "anim");
             if (slashAngle == 0f || slashAngle == 180f)
             {
                 self.transform.localScale = new Vector3(self.scale.x * 0.32f, self.scale.y * 0.32f, self.scale.z);
@@ -571,7 +532,7 @@ namespace Lightbringer
                 return;
             }
 
-            if (self.GetAttr<bool>("mantis")) // burning blade
+            if (Mirror.GetField<NailSlash, bool>(self, "mantis")) // burning blade
             {
                 self.transform.localScale = new Vector3(self.scale.x * 1.35f, self.scale.y * 1.35f, self.scale.z);
                 anim.Play(self.animName + " F");
@@ -582,7 +543,7 @@ namespace Lightbringer
                 anim.Play(self.animName);
             }
 
-            if (self.GetAttr<bool>("fury")) anim.Play(self.animName + " F");
+            if (Mirror.GetField<NailSlash, bool>(self, "fury")) anim.Play(self.animName + " F");
         }
 
         private static int TakeHealth(int amount)
@@ -648,8 +609,7 @@ namespace Lightbringer
                 HeroController.instance.AddMPChargeSpa(1);
                 foreach (int i in new int[] {17, 19, 34, 30, 28, 22, 25})
                 {
-                    //if (PlayerData.instance.GetBool("equippedCharm_" + i) &&
-                    if (PlayerData.instance.GetAttr<bool>("equippedCharm_" + i) &&
+                    if (Mirror.GetField<PlayerData, bool>(PlayerData.instance, "equippedCharm_" + i) &&
                         (i != 25 || !PlayerData.instance.brokenCharm_25))
                         HeroController.instance.AddMPChargeSpa(1);
                 }
@@ -725,11 +685,11 @@ namespace Lightbringer
             }
             if (AttackHandler.BeamAudioClip == null)
             {
-                GameObject BeamPrefabGameObject = HeroController.instance.GetAttr<GameObject>("grubberFlyBeamPrefabU");
+                GameObject BeamPrefabGameObject = Mirror.GetField<HeroController, GameObject>(HeroController.instance, "grubberFlyBeamPrefabU");
                 AudioSource BeamAudio = BeamPrefabGameObject.GetComponent<AudioSource>();
                 AttackHandler.BeamAudioClip = BeamAudio.clip;
             }
-            HeroController.instance.GetAttr<AudioSource>("audioSource").PlayOneShot(AttackHandler.BeamAudioClip, 0.1f);
+            Mirror.GetField<HeroController, AudioSource>(HeroController.instance, "audioSource").PlayOneShot(AttackHandler.BeamAudioClip, 0.1f);
         }
     }
 }

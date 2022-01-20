@@ -1,64 +1,23 @@
-﻿using Modding;
+﻿using System;
 
 namespace Lightbringer
 {
-    public class LightbringerSettings : ModSettings
+    [Serializable]
+    public class LightbringerSettings
     {
         // Lance attack config options
-        public int BaseBeamDamage
-        {
-            get => GetInt(3);
-            set => SetInt(value);
-        }
-
-        public int UpgradeBeamDamage
-        {
-            get => GetInt(3);
-            set => SetInt(value);
-        }
-
-        public int RadiantJewelDamage
-        {
-            get => GetInt(5);
-            set => SetInt(value);
-        }
-
-        public float FragileNightmareScaleFactor
-        {
-            get => GetFloat(1 / 20f);
-            set => SetFloat(value);
-        }
-
-        public int FragileNightmareSoulCost
-        {
-            get => GetInt(7);
-            set => SetInt(value);
-        }
+        public int BaseBeamDamage = 3;
+        public int UpgradeBeamDamage = 3;
+        public int RadiantJewelDamage = 5;
+        public float FragileNightmareScaleFactor = 1 / 20f;
+        public int FragileNightmareSoulCost = 7;
 
         // Nail attack config options
-        public int BaseNailDamage
-        {
-            get => GetInt(1);
-            set => SetInt(value);
-        }
-
-        public int UpgradeNailDamage
-        {
-            get => GetInt(2);
-            set => SetInt(value);
-        }
-
-        public float BurningPrideScaleFactor
-        {
-            get => GetFloat(1 / 6f);
-            set => SetFloat(value);
-        }
+        public int BaseNailDamage = 1;
+        public int UpgradeNailDamage = 2;
+        public float BurningPrideScaleFactor = 1 / 6f;
 
         // MP regen
-        public float SoulRegenRate
-        {
-            get => GetFloat(1.11f);
-            set => SetFloat(value);
-        }
+        public float SoulRegenRate = 1.11f;
     }
 }
