@@ -1,4 +1,4 @@
-# HollowKnight.Lightbringer
+# Hollow Knight: Lightbringer
 
 Created by 753, Ported by 56 and Theodore
 
