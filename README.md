@@ -1,13 +1,8 @@
 # HollowKnight.Lightbringer
 
+Created by 753, Ported by 56 and Theodore
 
-Hollow Knight: Lightbringer
-
-Created by 753, Ported by 56
-
-///////////////////////////////////////////////////////////////////////////
-
-// Feature List //
+## Feature List
 
 + Changes your character from melee to ranged
 + SOUL regenerates passively instead of from hitting enemies
@@ -17,15 +12,8 @@ Created by 753, Ported by 56
 + Secrets!
 + Empress Muzznik!
 
-///////////////////////////////////////////////////////////////////////////
+## Installation Instructions
 
-// Installation Instructions //
-
-To install the mod, use the ModInstaller found here:
-https://radiance.host/mods/ModInstaller.exe
-
-///////////////////////////////////////////////////////////////////////////
-
-// Troubleshooting //
-
-If any problems occur, feel free to contact 753 or 56 through Discord [753#0753 or 56#1363].
+Only for Hollow Knight 1.5 
+To install the mod, install the modding API at https://github.com/hk-modding/api (this is not needed if you already use mods with Scarab)
+Then, download the latest release and drag-and-drop the Lightbringer folder containing Lightbringer.dll to Hollow Knight/Hollow Knight_Data/Managed/Mods
