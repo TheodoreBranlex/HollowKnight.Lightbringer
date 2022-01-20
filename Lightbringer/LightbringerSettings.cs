@@ -5,6 +5,10 @@ namespace Lightbringer
     [Serializable]
     public class LightbringerSettings
     {
+        // Buffed bosses
+        public bool EmpressMuzznik = true;
+        public bool DoubleKin = false;
+
         // Lance attack config options
         public int BaseBeamDamage = 3;
         public int UpgradeBeamDamage = 3;

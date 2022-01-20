@@ -22,7 +22,7 @@ using USceneManager = UnityEngine.SceneManagement.SceneManager;
 namespace Lightbringer
 {
     [UsedImplicitly]
-    public partial class Lightbringer : Mod, ITogglableMod, IGlobalSettings<LightbringerSettings>
+    public partial class Lightbringer : Mod, IGlobalSettings<LightbringerSettings>
     {
         private const float ORIG_RUN_SPEED = 8.3f;
         private const float ORIG_RUN_SPEED_CH = 12f;
@@ -59,7 +59,7 @@ namespace Lightbringer
 
         public override string GetVersion()
         {
-            return "2.0.0";
+            return "2.1.0";
         }
 
         public override void Initialize()
@@ -490,20 +490,22 @@ namespace Lightbringer
 
             CreateCanvas();
 
-            // Empress Muzznik
-            if (arg0.name != "Crossroads_04" || PlayerData.instance.killedBigFly) yield break;
+            if (Settings.EmpressMuzznik)
+            {
+                if (arg0.name != "Crossroads_04" || PlayerData.instance.killedBigFly) yield break;
 
-            PlayerData.instance.CountGameCompletion();
+                PlayerData.instance.CountGameCompletion();
 
-            if (PlayerData.instance.completionPercentage > 80)
-                _textObj.text = "You are ready. Empress Muzznik awaits you.";
-            else if (PlayerData.instance.completionPercentage > 60)
-                _textObj.text = "You might just stand a chance...";
-            else
-                _textObj.text = "You are unworthy. Come back when you are stronger.";
+                if (PlayerData.instance.completionPercentage > 80)
+                    _textObj.text = "You are ready. Empress Muzznik awaits you.";
+                else if (PlayerData.instance.completionPercentage > 60)
+                    _textObj.text = "You might just stand a chance...";
+                else
+                    _textObj.text = "You are unworthy. Come back when you are stronger.";
 
-            _textObj.CrossFadeAlpha(1f, 0f, false);
-            _textObj.CrossFadeAlpha(0f, 7f, false);
+                _textObj.CrossFadeAlpha(1f, 0f, false);
+                _textObj.CrossFadeAlpha(0f, 7f, false);
+            }
         }
 
         private int SoulGain(int amount)
@@ -583,14 +585,14 @@ namespace Lightbringer
                 Time.timeScale = _timefracture;
 
             // Double Kin
-            if (_kin == null && (PlayerData.instance.geo == 753 || PlayerData.instance.geo == 56))
+            if (Settings.DoubleKin && _kin == null)
             {
                 _kin = GameObject.Find("Lost Kin");
                 if (_kin != null) _kin.AddComponent<DoubleKin>();
             }
 
             // EMPRESS MUZZNIK BOSS FIGHT
-            if (_gruz == null)
+            if (Settings.EmpressMuzznik && _gruz == null)
             {
                 _gruz = GameObject.Find("Giant Fly");
                 if (_gruz != null && GameManager.instance.GetSceneNameString() == "Crossroads_04") _gruz.AddComponent<Muzznik>();
