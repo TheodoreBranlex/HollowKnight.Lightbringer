@@ -14,33 +14,43 @@
     <ItemGroup>
         <Reference Include="Assembly-CSharp">
             <HintPath>..\Libraries\Assembly-CSharp.dll</HintPath>
+			<Private>False</Private>
         </Reference>
 		<Reference Include="MMHOOK_Assembly-CSharp">
 			<HintPath>..\Libraries\MMHOOK_Assembly-CSharp.dll</HintPath>
+			<Private>False</Private>
 		</Reference>
         <Reference Include="PlayMaker">
             <HintPath>..\Libraries\PlayMaker.dll</HintPath>
+			<Private>False</Private>
         </Reference>
         <Reference Include="UnityEngine">
             <HintPath>..\Libraries\UnityEngine.dll</HintPath>
+			<Private>False</Private>
         </Reference>
         <Reference Include="UnityEngine.AudioModule">
             <HintPath>..\Libraries\UnityEngine.AudioModule.dll</HintPath>
+			<Private>False</Private>
         </Reference>
         <Reference Include="UnityEngine.CoreModule">
             <HintPath>..\Libraries\UnityEngine.CoreModule.dll</HintPath>
+			<Private>False</Private>
         </Reference>
         <Reference Include="UnityEngine.ImageConversionModule">
             <HintPath>..\Libraries\UnityEngine.ImageConversionModule.dll</HintPath>
+			<Private>False</Private>
         </Reference>
         <Reference Include="UnityEngine.TextRenderingModule">
             <HintPath>..\Libraries\UnityEngine.TextRenderingModule.dll</HintPath>
+			<Private>False</Private>
         </Reference>
         <Reference Include="UnityEngine.UI">
             <HintPath>..\Libraries\UnityEngine.UI.dll</HintPath>
+			<Private>False</Private>
         </Reference>
         <Reference Include="UnityEngine.UIModule">
             <HintPath>..\Libraries\UnityEngine.UIModule.dll</HintPath>
+			<Private>False</Private>
         </Reference>
     </ItemGroup>
     <ItemGroup>
