@@ -190,19 +190,19 @@ namespace Lightbringer
                         {
                             if (tShell || pd.equippedCharm_20)
                             {
-                                if (hc.cState.facingRight) { Recoil(BeamDirection.Right, true); }
-                                else { Recoil(BeamDirection.Left, true); }
+                                if (hc.cState.facingRight) { Recoil(Right, true); }
+                                else { Recoil(Left, true); }
                             }
                             else
                             {
-                                if (hc.cState.facingRight) { Recoil(BeamDirection.Right, false); }
-                                else { Recoil(BeamDirection.Left, false); }
+                                if (hc.cState.facingRight) { Recoil(Right, false); }
+                                else { Recoil(Left, false); }
                             }
                         }
                         else if (tShell && pd.equippedCharm_20)
                         {
-                            if (hc.cState.facingRight) { Recoil(BeamDirection.Right, false); }
-                            else { Recoil(BeamDirection.Left, false); }
+                            if (hc.cState.facingRight) { Recoil(Right, false); }
+                            else { Recoil(Left, false); }
                         }
                     }
 
@@ -297,21 +297,15 @@ namespace Lightbringer
             {
                 case Right:
                     if (@long)
-                    {
                         HeroController.instance.RecoilLeftLong();
-                        break;
-                    }
-
-                    HeroController.instance.RecoilLeft();
+                    else
+                        HeroController.instance.RecoilLeft();
                     break;
                 case Left:
                     if (@long)
-                    {
                         HeroController.instance.RecoilRightLong();
-                        break;
-                    }
-
-                    HeroController.instance.RecoilRight();
+                    else
+                        HeroController.instance.RecoilRight();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(dir), dir, null);
