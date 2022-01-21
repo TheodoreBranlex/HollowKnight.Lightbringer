@@ -85,8 +85,7 @@ namespace Lightbringer
             }
             
             // Fragile Nightmare damage calculations
-            if (pd.equippedCharm_25
-                && pd.MPCharge > settings.FragileNightmareSoulCost) // Fragile Strength > Fragile Nightmare
+            if (pd.equippedCharm_25 && pd.MPCharge > settings.FragileNightmareSoulCost) // Fragile Strength > Fragile Nightmare
             {
                 pd.beamDamage += (int) (pd.MPCharge * settings.FragileNightmareScaleFactor);
                 hc.TakeMP(settings.FragileNightmareSoulCost);
@@ -128,14 +127,12 @@ namespace Lightbringer
                         if (pd.MPCharge > 10)
                         {
                             if (!_crit) hc.TakeMP(10);
-
                             hc.spell1Prefab.Spawn(hc.transform.position + (tShell ? new Vector3(0f, .6f) : new Vector3(0f, .3f)));
                         }
                         else
                         {
                             ReflectionHelper.GetField<HeroController, AudioSource>(hc, "audioSource").PlayOneShot(hc.blockerImpact, 1f);
                         }
-
                         return;
                     }
 
@@ -155,33 +152,21 @@ namespace Lightbringer
                         }
                         // Longnail
                         else if (pd.equippedCharm_18)
-                        {
                             SpawnBeams(1.5f, 1.5f, positionY: tShell ? .2f : .1f);
-                        }
                         else
-                        {
                             SpawnBeam(hc.cState.facingRight, 1.5f, 1.5f, positionY: tShell ? .2f : .1f);
-                        }
                     }
                     // Longnail AND Soul Catcher
                     else if (pd.equippedCharm_20 && pd.equippedCharm_18)
-                    {
                         SpawnBeams(1f, 1f, positionY: tShell ? new float[] { -.2f, .7f } : new float[] { .5f, -.4f });
-                    }
                     // Soul Catcher
                     else if (pd.equippedCharm_20)
-                    {
                         SpawnBeams(hc.cState.facingRight, 1f, 1f, positionY: tShell ? new[] { -.2f, .7f } : new[] { .5f, -.4f });
-                    }
                     // Longnail
                     else if (pd.equippedCharm_18)
-                    {
                         SpawnBeams(1f, 1f);
-                    }
-                    else // player has no charms
-                    {
+                    else // No charms
                         SpawnBeam(hc.cState.facingRight, 1f, 1f);
-                    }
 
                     // Handle Recoil
                     if (!pd.equippedCharm_18)
@@ -207,7 +192,6 @@ namespace Lightbringer
                     }
 
                     break;
-                // attack upwards
 
                 #endregion
 
@@ -252,7 +236,7 @@ namespace Lightbringer
 
                 #endregion
 
-                #region Down
+                #region Downward Attack
 
                 case AttackDirection.downward:
                     ReflectionHelper.SetField(hc, "slashComponent", hc.downSlash);
