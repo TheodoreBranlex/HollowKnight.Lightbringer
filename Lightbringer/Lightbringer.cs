@@ -59,7 +59,7 @@ namespace Lightbringer
 
         public override string GetVersion()
         {
-            return "2.1.0";
+            return "2.1.1";
         }
 
         public override void Initialize()
@@ -460,7 +460,7 @@ namespace Lightbringer
 
 
             // BURNING PRIDE CALCULATIONS
-            pd.nailDamage = Settings.BaseNailDamage + pd.nailSmithUpgrades * Settings.UpgradeNailDamage;
+            pd.nailDamage = Settings.NailDamage + pd.nailSmithUpgrades * Settings.NailUpgradeBonus;
             if (pd.equippedCharm_13) // Mark of Pride
             {
                 pd.CountGameCompletion();

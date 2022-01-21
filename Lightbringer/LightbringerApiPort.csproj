@@ -9,7 +9,7 @@
         <OutputPath>bin\$(Configuration)\</OutputPath>
         <Authors>753</Authors>
         <Company>753.network</Company>
-        <Version>2.1.0</Version>
+        <Version>2.1.1</Version>
     </PropertyGroup>
     <ItemGroup>
         <Reference Include="Assembly-CSharp">

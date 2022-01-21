@@ -10,15 +10,16 @@ namespace Lightbringer
         public bool DoubleKin = false;
 
         // Lance attack config options
-        public int BaseBeamDamage = 3;
-        public int UpgradeBeamDamage = 3;
+        public bool MeleeNail = true;
+        public int LanceDamage = 3;
+        public int LanceUpgradeBonus = 3;
         public int RadiantJewelDamage = 5;
         public float FragileNightmareScaleFactor = 1 / 20f;
         public int FragileNightmareSoulCost = 7;
 
         // Nail attack config options
-        public int BaseNailDamage = 1;
-        public int UpgradeNailDamage = 2;
+        public int NailDamage = 1;
+        public int NailUpgradeBonus = 2;
         public float BurningPrideScaleFactor = 1 / 6f;
 
         // MP regen

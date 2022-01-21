@@ -22,9 +22,7 @@ namespace Lightbringer
 
         public AttackHandler() {}
 
-        public AttackHandler(float fracture)
-        {
-        }
+        public AttackHandler(float fracture) {}
 
         private static Random _rand => Lightbringer.Random;
 
@@ -50,7 +48,7 @@ namespace Lightbringer
             PlayMakerFSM.BroadcastEvent("UPDATE NAIL DAMAGE");
 
             // LANCE
-            pd.beamDamage = settings.BaseBeamDamage + pd.nailSmithUpgrades * settings.UpgradeBeamDamage;
+            pd.beamDamage = settings.LanceDamage + pd.nailSmithUpgrades * settings.LanceUpgradeBonus;
 
             // Radiant Jewel (Elegy)
             if (pd.equippedCharm_35) pd.beamDamage += settings.RadiantJewelDamage;
@@ -121,7 +119,8 @@ namespace Lightbringer
                     hc.normalSlashFsm.FsmVariables.GetFsmFloat("direction").Value = hc.cState.facingRight ? 0f : 180f;
                     ReflectionHelper.SetField(hc, "slashComponent", hc.normalSlash);
 
-                    hc.normalSlash.StartSlash();
+                    if (settings.MeleeNail)
+                        hc.normalSlash.StartSlash();
 
                     bool tShell = pd.equippedCharm_4;
 
