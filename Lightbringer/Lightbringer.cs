@@ -599,46 +599,6 @@ namespace Lightbringer
                     if (ReflectionHelper.GetField<PlayerData, bool>(PlayerData.instance, "equippedCharm_" + i))
                         if (i != 25 || !PlayerData.instance.brokenCharm_25)
                             HeroController.instance.AddMPChargeSpa(1);
-
-                #region Easter Eggs
-
-                switch (PlayerData.instance.geo)
-                {
-                    case 753:
-                        HeroController.instance.AddMPChargeSpa(3);
-                        int num = Random.Next(1, 6);
-                        switch (num)
-                        {
-                            case 1:
-                                _SpriteFlash.flash(Color.green, 0.6f, 0.45f, 0f, 0.45f);
-                                break;
-                            case 2:
-                                _SpriteFlash.flash(Color.red, 0.6f, 0.45f, 0f, 0.45f);
-                                break;
-                            case 3:
-                                _SpriteFlash.flash(Color.magenta, 0.6f, 0.45f, 0f, 0.45f);
-                                break;
-                            case 4:
-                                _SpriteFlash.flash(Color.yellow, 0.6f, 0.45f, 0f, 0.45f);
-                                break;
-                            default:
-                                _SpriteFlash.flash(Color.blue, 0.6f, 0.45f, 0f, 0.45f);
-                                break;
-                        }
-
-                        break;
-                    case 56:
-                        HeroController.instance.AddMPChargeSpa(3);
-                        _SpriteFlash.flash(Color.black, 1.11f, 0f, 1.11f, 0f);
-                        break;
-                    default:
-                        if (PlayerData.instance.equippedCharm_6)
-                            _SpriteFlash.flash(Color.white, 0.6f, 0.45f, 0f, 0.45f);
-
-                        break;
-                }
-
-                #endregion
             }
 
             #region Nailmaster's Passion
