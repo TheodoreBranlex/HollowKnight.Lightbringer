@@ -14,6 +14,6 @@ Created by 753, Ported by 56 and Theodore
 ## Installation Instructions
 
 Only for Hollow Knight 1.5 
-+ First, install the modding API from https://github.com/hk-modding/api (this is not needed if you already use Scarab)
-+ Install Vasi from https://github.com/fifty-six/HollowKnight.Vasi (or in Scarab)
-+ Then, download the latest release and drag-and-drop the folder containing Lightbringer.dll to Hollow Knight/Hollow Knight_Data/Managed/Mods
++ First, install the modding API from https://github.com/hk-modding/api (this is not needed if you're already using Scarab)
++ Then, download the latest release and drag-and-drop the Lightbringer folder containing Lightbringer.dll into Hollow Knight/Hollow Knight_Data/Managed/Mods
++ To change settings, edit AppData/LocalLow/Team Cherry/Hollow Knight/Lightbringer.GlobalSettings.json
