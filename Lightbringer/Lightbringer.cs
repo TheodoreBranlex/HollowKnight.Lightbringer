@@ -378,7 +378,8 @@ namespace Lightbringer
 
         private void DoAttack()
         {
-            if (_origNailTerrainCheckTime == 0) _origNailTerrainCheckTime = ReflectionHelper.GetField<HeroController, float>(HeroController.instance, "NAIL_TERRAIN_CHECK_TIME");
+            if (_origNailTerrainCheckTime == 0)
+                _origNailTerrainCheckTime = ReflectionHelper.GetField<HeroController, float>(HeroController.instance, "NAIL_TERRAIN_CHECK_TIME");
 
             if (!(HeroController.instance.vertical_input < Mathf.Epsilon) &&
                 !(HeroController.instance.vertical_input < -Mathf.Epsilon &&
@@ -411,7 +412,7 @@ namespace Lightbringer
                 (PlayerData.instance.MPCharge < PlayerData.instance.maxMP ||
                  PlayerData.instance.MPReserve != PlayerData.instance.MPReserveMax))
             {
-                int lostGeo = (PlayerData.instance.maxMP - 1 - PlayerData.instance.MPCharge)  / 3 +
+                int lostGeo = (PlayerData.instance.maxMP - 1 - PlayerData.instance.MPCharge) / 3 +
                               (PlayerData.instance.MPReserveMax - PlayerData.instance.MPReserve) / 3 + 1;
                 HeroController.instance.AddMPChargeSpa(lostGeo > amount ? amount * 3 : lostGeo * 3);
                 orig(self, lostGeo > amount ? 0 : amount - lostGeo);
