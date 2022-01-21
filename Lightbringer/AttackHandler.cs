@@ -54,8 +54,7 @@ namespace Lightbringer
             if (pd.equippedCharm_35) pd.beamDamage += settings.RadiantJewelDamage;
 
             // Fragile Nightmare damage calculations
-            if (dir == AttackDirection.normal && pd.equippedCharm_25 &&
-                pd.MPCharge > 3) // Fragile Strength > Fragile Nightmare
+            if (dir == AttackDirection.normal && pd.equippedCharm_25 && pd.MPCharge > 3) // Fragile Strength > Fragile Nightmare
             {
                 pd.beamDamage += pd.MPCharge / 20;
                 hc.TakeMP(7);

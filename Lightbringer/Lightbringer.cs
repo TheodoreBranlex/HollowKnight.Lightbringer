@@ -59,7 +59,7 @@ namespace Lightbringer
 
         public override string GetVersion()
         {
-            return "2.1.1";
+            return "2.1.2";
         }
 
         public override void Initialize()
@@ -479,33 +479,27 @@ namespace Lightbringer
 
         private IEnumerator SceneLoaded(Scene arg0)
         {
-            yield return null;
-            yield return null;
-
             // Stop flickering soul orb
-            FsmEvent a = GameManager.instance.soulOrb_fsm.FsmEvents.FirstOrDefault(x => x.Name == "MP GAIN");
-            if (a != null) a.Name = "no";
+            // FsmEvent a = GameManager.instance.soulOrb_fsm.FsmEvents.FirstOrDefault(x => x.Name == "MP GAIN");
+            // if (a != null) a.Name = "no";
 
             GameManager.instance.StartCoroutine(ChangeSprites());
 
             CreateCanvas();
 
-            if (Settings.EmpressMuzznik)
-            {
-                if (arg0.name != "Crossroads_04" || PlayerData.instance.killedBigFly) yield break;
+            if (!Settings.EmpressMuzznik || arg0.name != "Crossroads_04" || PlayerData.instance.killedBigFly) yield break;
 
-                PlayerData.instance.CountGameCompletion();
+            PlayerData.instance.CountGameCompletion();
 
-                if (PlayerData.instance.completionPercentage > 80)
-                    _textObj.text = "You are ready. Empress Muzznik awaits you.";
-                else if (PlayerData.instance.completionPercentage > 60)
-                    _textObj.text = "You might just stand a chance...";
-                else
-                    _textObj.text = "You are unworthy. Come back when you are stronger.";
+            if (PlayerData.instance.completionPercentage > 80)
+                _textObj.text = "You are ready. Empress Muzznik awaits you.";
+            else if (PlayerData.instance.completionPercentage > 60)
+                _textObj.text = "You might just stand a chance...";
+            else
+                _textObj.text = "You are unworthy. Come back when you are stronger.";
 
-                _textObj.CrossFadeAlpha(1f, 0f, false);
-                _textObj.CrossFadeAlpha(0f, 7f, false);
-            }
+            _textObj.CrossFadeAlpha(1f, 0f, false);
+            _textObj.CrossFadeAlpha(0f, 7f, false);
         }
 
         private int SoulGain(int amount)
