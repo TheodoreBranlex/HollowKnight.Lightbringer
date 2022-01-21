@@ -3,10 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using GlobalEnums;
-using HutongGames.PlayMaker;
 using JetBrains.Annotations;
 using Modding;
 using On.HutongGames.PlayMaker.Actions;
@@ -410,7 +408,7 @@ namespace Lightbringer
         {
             // Don't let Faulty Wallet hurt people with full SOUL
             if (PlayerData.instance.equippedCharm_21 &&
-                (PlayerData.instance.MPCharge  < PlayerData.instance.maxMP ||
+                (PlayerData.instance.MPCharge < PlayerData.instance.maxMP ||
                  PlayerData.instance.MPReserve != PlayerData.instance.MPReserveMax))
             {
                 int lostGeo = (PlayerData.instance.maxMP - 1 - PlayerData.instance.MPCharge)  / 3 +
@@ -419,9 +417,7 @@ namespace Lightbringer
                 orig(self, lostGeo > amount ? 0 : amount - lostGeo);
             }
             else
-            {
                 orig(self, amount);
-            }
         }
 
         private void CharmUpdate(PlayerData pd, HeroController self)
@@ -527,7 +523,7 @@ namespace Lightbringer
                 return;
             }
 
-            if (ReflectionHelper.GetField<NailSlash, bool>(self, "mantis")) // burning blade
+            if (ReflectionHelper.GetField<NailSlash, bool>(self, "mantis")) // Burning blade
             {
                 self.transform.localScale = new Vector3(self.scale.x * 1.35f, self.scale.y * 1.35f, self.scale.z);
                 anim.Play(self.animName + " F");
@@ -574,8 +570,7 @@ namespace Lightbringer
                 _timefracture = 1f;
             }
 
-            if (_timefracture > .99f && PlayerData.instance.equippedCharm_14 &&
-                !HeroController.instance.cState.isPaused)
+            if (_timefracture > .99f && PlayerData.instance.equippedCharm_14 && !HeroController.instance.cState.isPaused)
                 Time.timeScale = _timefracture;
 
             // Double Kin
@@ -596,22 +591,19 @@ namespace Lightbringer
             if (_manaRegenTime >= Settings.SoulRegenRate && GameManager.instance.soulOrb_fsm != null)
             {
                 if (_SpriteFlash == null)
-                {
                     _SpriteFlash = HeroController.instance.GetComponent<SpriteFlash>();
-                }
                 // Mana regen
                 _manaRegenTime -= Settings.SoulRegenRate;
                 HeroController.instance.AddMPChargeSpa(1);
                 foreach (int i in new int[] {17, 19, 34, 30, 28, 22, 25})
-                {
-                    if (ReflectionHelper.GetField<PlayerData, bool>(PlayerData.instance, "equippedCharm_" + i) &&
-                        (i != 25 || !PlayerData.instance.brokenCharm_25))
-                        HeroController.instance.AddMPChargeSpa(1);
-                }
+                    if (ReflectionHelper.GetField<PlayerData, bool>(PlayerData.instance, "equippedCharm_" + i))
+                        if (i != 25 || !PlayerData.instance.brokenCharm_25)
+                            HeroController.instance.AddMPChargeSpa(1);
+
+                #region Easter Eggs
 
                 switch (PlayerData.instance.geo)
                 {
-                    // Easter Egg
                     case 753:
                         HeroController.instance.AddMPChargeSpa(3);
                         int num = Random.Next(1, 6);
@@ -645,7 +637,11 @@ namespace Lightbringer
 
                         break;
                 }
+
+                #endregion
             }
+
+            #region Nailmaster's Passion
 
             if (!PlayerData.instance.equippedCharm_26) return;
 
@@ -685,6 +681,8 @@ namespace Lightbringer
                 AttackHandler.BeamAudioClip = BeamAudio.clip;
             }
             ReflectionHelper.GetField<HeroController, AudioSource>(HeroController.instance, "audioSource").PlayOneShot(AttackHandler.BeamAudioClip, 0.1f);
+            
+            #endregion
         }
     }
 }
