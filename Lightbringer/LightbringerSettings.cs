@@ -10,7 +10,7 @@ namespace Lightbringer
         public bool DoubleKin = false;
 
         // Lance attack config options
-        public bool MeleeNail = true;
+        public bool InvisibleNail = true;
         public int LanceDamage = 3;
         public int LanceUpgradeBonus = 3;
         public int RadiantJewelDamage = 5;

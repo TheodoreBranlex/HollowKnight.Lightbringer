@@ -117,7 +117,7 @@ namespace Lightbringer
                     hc.normalSlashFsm.FsmVariables.GetFsmFloat("direction").Value = hc.cState.facingRight ? 0f : 180f;
                     ReflectionHelper.SetField(hc, "slashComponent", hc.normalSlash);
 
-                    if (settings.MeleeNail)
+                    if (settings.InvisibleNail)
                         hc.normalSlash.StartSlash();
 
                     bool tShell = pd.equippedCharm_4;
