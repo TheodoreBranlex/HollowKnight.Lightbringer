@@ -13,6 +13,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 using Random = System.Random;
+using SetSpriteRendererSprite = HutongGames.PlayMaker.Actions.SetSpriteRendererSprite;
 using USceneManager = UnityEngine.SceneManagement.SceneManager;
 
 // ReSharper disable CompareOfFloatsByEqualityOperator
@@ -292,6 +293,15 @@ namespace Lightbringer
                           .material.mainTexture = Sprites["UI"].texture;
 
             CharmIconList.Instance.unbreakableStrength = Sprites["Charms.ustr"];
+
+            GameObject.Find("/_GameCameras/HudCamera/Inventory/Charms/Collected Charms/25")
+                .LocateMyFSM("charm_show_if_collected")
+                .GetAction<SetSpriteRendererSprite>("Glass Attack", 2)
+                .sprite.Value = Sprites["Charms.brokestr"];
+            GameObject.Find("/_GameCameras/HudCamera/Inventory/Charms/Details/Detail Sprite")
+                .LocateMyFSM("Update Sprite")
+                .GetAction<SetSpriteRendererSprite>("Glass Attack", 2)
+                .sprite.Value = Sprites["Charms.brokestr"];
 
             HeroController.instance.grubberFlyBeamPrefabL.GetComponent<tk2dSprite>()
                           .GetCurrentSpriteDef()
