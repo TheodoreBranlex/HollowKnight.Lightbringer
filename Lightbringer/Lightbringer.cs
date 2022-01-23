@@ -476,10 +476,6 @@ namespace Lightbringer
 
         private IEnumerator SceneLoaded(Scene arg0)
         {
-            // Stop flickering soul orb
-            // FsmEvent a = GameManager.instance.soulOrb_fsm.FsmEvents.FirstOrDefault(x => x.Name == "MP GAIN");
-            // if (a != null) a.Name = "no";
-
             GameManager.instance.StartCoroutine(ChangeSprites());
 
             CreateCanvas();
