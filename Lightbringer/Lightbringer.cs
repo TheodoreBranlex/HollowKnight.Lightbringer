@@ -55,10 +55,7 @@ namespace Lightbringer
         public void OnLoadGlobal(LightbringerSettings s) => Settings = s;
         public LightbringerSettings OnSaveGlobal() => Settings;
 
-        public override string GetVersion()
-        {
-            return "2.1.2";
-        }
+        public override string GetVersion() => Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
         public override void Initialize()
         {
