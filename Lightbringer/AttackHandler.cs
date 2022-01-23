@@ -109,7 +109,6 @@ namespace Lightbringer
                 #region Normal Attack
 
                 case AttackDirection.normal:
-                    // fix bug
                     pd.nailDamage = pd.beamDamage;
                     PlayMakerFSM.BroadcastEvent("UPDATE NAIL DAMAGE");
                     pd.beamDamage = lanceDamage;
