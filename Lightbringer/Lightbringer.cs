@@ -181,9 +181,8 @@ namespace Lightbringer
             // Bloodlust
             ModHooks.SoulGainHook += SoulGain;
 
-            // Soul Gen 
-            // 753/56 Easter Egg 
-            // Nailmaster's Passion 
+            // Soul Gen
+            // Nailmaster's Passion
             // Add Muzznik & DoubleKin Behaviours
             ModHooks.HeroUpdateHook += Update;
 
