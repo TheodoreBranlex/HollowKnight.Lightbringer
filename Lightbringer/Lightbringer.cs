@@ -21,7 +21,7 @@ using USceneManager = UnityEngine.SceneManagement.SceneManager;
 namespace Lightbringer
 {
     [UsedImplicitly]
-    public partial class Lightbringer : Mod, IGlobalSettings<LightbringerSettings>
+    public partial class Lightbringer : Mod, ITogglableMod, IGlobalSettings<LightbringerSettings>
     {
         private const float ORIG_RUN_SPEED = 8.3f;
         private const float ORIG_RUN_SPEED_CH = 12f;
