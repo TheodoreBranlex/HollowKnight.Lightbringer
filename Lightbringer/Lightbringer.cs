@@ -335,13 +335,14 @@ namespace Lightbringer
                 var beamctrl = BeamSweeper.LocateMyFSM("Control");
                 beamctrl.SetState("Beam Sweep R 2");
             });
+            spellctrl.RemoveAction("Scream Burst 2", 3);
             spellctrl.RemoveAction("Scream Burst 2", 1);
             spellctrl.RemoveAction("Scream Burst 2", 0);
 
             spellctrl.ReplaceAction("Fireball 2", 3, () => {
                 HeroController.instance.StartCoroutine(SpawnOrb());
             });
-            spellctrl.ChangeTransition("Fireball 2", "FINISHED", "Spell End");
+            spellctrl.ReplaceTransition("Fireball 2", "FINISHED", "Spell End");
 
             spellctrl.AddAction("Q2 Land", () => {
                 int n = 10;
@@ -371,67 +372,38 @@ namespace Lightbringer
 
             var orbcontrol = orb.LocateMyFSM("Orb Control");
 
-            FsmState chaseEnemy = new FsmState(orbcontrol.Fsm)
-            {
-                Name = "Chase Enemy"
-            };
-            #region Event&Transition
-            FsmEvent hitevent = new FsmEvent("ORBHIT");
-            FsmEvent dispateevent = FsmEvent.GetFsmEvent("DISSIPATE");
-            orbcontrol.ChangeTransition("Init", "FIRE", "Chase Enemy");
-            orbcontrol.ChangeTransition("Init", "FINISHED", "Chase Enemy");
-            chaseEnemy.Transitions = new FsmTransition[]
-            {
-                new FsmTransition
-                {
-                    FsmEvent = hitevent,
-                    ToState = "Impact pause"
-                },
-                new FsmTransition
-                {
-                    FsmEvent = dispateevent,
-                    ToState = "Dissipate"
-                },
-            };
-            #endregion
+            orbcontrol.AddState("Chase Enemy");
 
-            var _list = orbcontrol.FsmStates.ToList();
-            _list.Add(chaseEnemy);
-            var _toremove = new List<FsmState>();
-            foreach (var s in _list)
-            {
-                if (s.Name == "Orbiting" || s.Name.Contains("Chase Hero"))
-                    _toremove.Add(s);
-            }
-            foreach (var s in _toremove)
-            {
-                _list.Remove(s);
-            }
+            orbcontrol.ReplaceTransition("Init", "FIRE", "Chase Enemy");
+            orbcontrol.ReplaceTransition("Init", "FINISHED", "Chase Enemy");
 
-            orbcontrol.Fsm.States = _list.ToArray();
+            orbcontrol.AddTransition("Chase Enemy", "ORBHIT", "Impact pause");
+            orbcontrol.AddTransition("Chase Enemy", "DISSIPATE", "Dissipate");
 
-            chaseEnemy.Actions = new FsmStateAction[]
+            orbcontrol.RemoveState("Orbiting");
+            orbcontrol.RemoveState("Chase Hero");
+
+            orbcontrol.AddAction("Chase Enemy", new Trigger2dEventLayer
             {
-                new Trigger2dEventLayer{
-                    trigger =  PlayMakerUnity2d.Trigger2DType.OnTriggerEnter2D,
-                    collideLayer = 11,
-                    sendEvent = hitevent,
-                    collideTag = "",
-                    storeCollider = new FsmGameObject()
-        },
-                new Trigger2dEventLayer{
-                    trigger =  PlayMakerUnity2d.Trigger2DType.OnTriggerStay2D,
-                    collideLayer = 11,
-                    sendEvent = hitevent,
-                    collideTag = "",
-                    storeCollider = new FsmGameObject()
-        },
-                new Wait
-                {
-                    time = 3.5f,
-                    finishEvent = dispateevent
-                },
-            };
+                trigger = PlayMakerUnity2d.Trigger2DType.OnTriggerEnter2D,
+                collideLayer = 11,
+                sendEvent = FsmEvent.GetFsmEvent("ORBHIT"),
+                collideTag = "",
+                storeCollider = new FsmGameObject()
+            });
+            orbcontrol.AddAction("Chase Enemy", new Trigger2dEventLayer
+            {
+                trigger = PlayMakerUnity2d.Trigger2DType.OnTriggerStay2D,
+                collideLayer = 11,
+                sendEvent = FsmEvent.GetFsmEvent("ORBHIT"),
+                collideTag = "",
+                storeCollider = new FsmGameObject()
+            });
+            orbcontrol.AddAction("Chase Enemy", new Wait
+            {
+                time = 3.5f,
+                finishEvent = FsmEvent.GetFsmEvent("DISSIPATE")
+            });
 
             orbcontrol.GetAction<Wait>("Impact", 7).time = 0.1f;
             orbcontrol.Fsm.SaveActions();
