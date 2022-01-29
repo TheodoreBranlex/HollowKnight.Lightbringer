@@ -16,37 +16,28 @@ namespace Lightbringer
         private void Awake()
         {
             rb2d = GetComponent<Rigidbody2D>();
-            if (rb2d == null)
-            {
-                Destroy(gameObject);
-                return;
-            }
             var targets = FindObjectsOfType<HealthManager>().ToList();
             speedMax = Random.Range(20, 30);
             accelerationForce = Random.Range(40, 60);
-            for(int i=0;i<targets.ToArray().Length;i++)
+            for(int i = 0; i < targets.ToArray().Length; i++)
             {
                 var t = targets[i];
-                if (!searchActiveEnemy(t))
+                if (!activeEnemy(t))
                     targets.Remove(t);
             }
-            if(targets.Count>0)
+            if(targets.Count > 0)
             {
                 var best = MatchBest(targets);
-                if (best == null)
-                {
-                    Modding.Logger.LogDebug("No Match!");
-                    int selected = Random.Range(0, targets.Count);
-                    target = targets[selected];
-                }
-                else
+                if (best != null)
                     target = best;
+                else
+                    target = targets[Random.Range(0, targets.Count)];
             }
 
         }
-        private static bool searchActiveEnemy(HealthManager hm)
+        private static bool activeEnemy(HealthManager hm)
         {
-            if (hm == null || (!hm.gameObject.activeSelf) || hm.isDead)
+            if (hm == null || !hm.gameObject.activeSelf || hm.isDead)
                 return false;
             if (hm.IsInvincible)
                 return false;
@@ -62,25 +53,22 @@ namespace Lightbringer
                 return targets[0];
             else
             {
-
-                float min_factor = 999 + 1*(-0.05f);
+                float min_factor = 999;
                 HealthManager best = null;
                 foreach(var hm in targets)
                 {
                     var polordis = hm.transform.position - gameObject.transform.position;
                     var distance = polordis.x * polordis.x + polordis.y * polordis.y;
                     var hp = hm.hp;
-                    var cur_factor = (-0.05f)*hp + distance;
+                    var cur_factor = -0.05f * hp + distance;
                     var coll = hm.gameObject.GetComponent<Collider2D>();
                     if(coll && coll.isTrigger)
                         cur_factor += 100;
-                    if(cur_factor>0 && cur_factor<min_factor && !hm.deathReset)
+                    if(cur_factor > 0 && cur_factor < min_factor && !hm.deathReset)
                     {
                         min_factor = cur_factor;
                         best = hm;
                     }
-                    if(!hm.hasSpecialDeath)
-                        return hm;
                 }
                 return best;
             }

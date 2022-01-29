@@ -16,7 +16,6 @@ using Object = UnityEngine.Object;
 using Random = System.Random;
 using IntCompare = On.HutongGames.PlayMaker.Actions.IntCompare;
 using USceneManager = UnityEngine.SceneManagement.SceneManager;
-using System.Linq;
 
 // ReSharper disable CompareOfFloatsByEqualityOperator
 
@@ -73,12 +72,7 @@ namespace Lightbringer
         {
             Instance = this;
             GetPrefabs(preloadedObjects);
-            GameManager.instance.StartCoroutine(WaitHero(() => {
-                SetupOrb();
-                SetupBeam();
-                SetupBlast();
-                SetupSpike();
-            }));
+            SetupSpells();
             RegisterCallbacks();
         }
 
@@ -309,13 +303,6 @@ namespace Lightbringer
                 ReflectionHelper.GetField<ShopItemStats, GameObject>(self, "itemSprite").GetComponent<SpriteRenderer>().sprite = Sprites[key];
         }
 
-        private void AfterSaveGameLoad(SaveGameData data)
-        {
-            SaveGameSave();
-            GameManager.instance.StartCoroutine(ChangeSprites());
-            GameManager.instance.StartCoroutine(WaitHero(() => SetupTrigger()));
-        }
-
         private IEnumerator WaitHero(Action a)
         {
             yield return new WaitWhile(() => HeroController.instance == null);
@@ -323,225 +310,11 @@ namespace Lightbringer
             a?.Invoke();
         }
 
-        private void SetupTrigger()
+        private void AfterSaveGameLoad(SaveGameData data)
         {
-            var spellctrl = HeroController.instance.spellControl;
-            spellctrl.AddAction("Focus", () => {
-                HKBlast.transform.position = HeroController.instance.transform.position;
-                HKBlast.LocateMyFSM("Control").SetState("Blast");
-            });
-
-            spellctrl.ReplaceAction("Scream Burst 2", 8, () => {
-                var beamctrl = BeamSweeper.LocateMyFSM("Control");
-                beamctrl.SetState("Beam Sweep R 2");
-            });
-            spellctrl.RemoveAction("Scream Burst 2", 3);
-            spellctrl.RemoveAction("Scream Burst 2", 1);
-            spellctrl.RemoveAction("Scream Burst 2", 0);
-
-            spellctrl.ReplaceAction("Fireball 2", 3, () => {
-                HeroController.instance.StartCoroutine(SpawnOrb());
-            });
-            spellctrl.ReplaceTransition("Fireball 2", "FINISHED", "Spell End");
-
-            spellctrl.AddAction("Q2 Land", () => {
-                int n = 10;
-                float spacing = 0.8f;
-                int dmgAmount = 5;
-                Vector3 scale = new Vector3(1.0f, 0.7f, 0.9f);
-                Vector3 pos = HeroController.instance.transform.position;
-                if (PlayerData.instance.equippedCharm_19)
-                {
-                    n += 5;
-                    dmgAmount += 5;
-                }
-                SpikePre.transform.localScale = scale;
-                SpikePre.GetComponent<DamageEnemies>().damageDealt = dmgAmount;
-                SpikeCenter.transform.position = pos;
-                SpawnSpike(n, spacing);
-            });
-
-            spellctrl.Fsm.SaveActions();
-        }
-
-        private void SetupOrb()
-        {
-            var orb = orbPre;
-            orb.layer = 17;   // PhysLayers.HERO_ATTACK
-            AddDamageEnemy(orb);
-
-            var orbcontrol = orb.LocateMyFSM("Orb Control");
-
-            orbcontrol.AddState("Chase Enemy");
-
-            orbcontrol.ReplaceTransition("Init", "FIRE", "Chase Enemy");
-            orbcontrol.ReplaceTransition("Init", "FINISHED", "Chase Enemy");
-
-            orbcontrol.AddTransition("Chase Enemy", "ORBHIT", "Impact pause");
-            orbcontrol.AddTransition("Chase Enemy", "DISSIPATE", "Dissipate");
-
-            orbcontrol.RemoveState("Orbiting");
-            orbcontrol.RemoveState("Chase Hero");
-
-            orbcontrol.AddAction("Chase Enemy", new Trigger2dEventLayer
-            {
-                trigger = PlayMakerUnity2d.Trigger2DType.OnTriggerEnter2D,
-                collideLayer = 11,
-                sendEvent = FsmEvent.GetFsmEvent("ORBHIT"),
-                collideTag = "",
-                storeCollider = new FsmGameObject()
-            });
-            orbcontrol.AddAction("Chase Enemy", new Trigger2dEventLayer
-            {
-                trigger = PlayMakerUnity2d.Trigger2DType.OnTriggerStay2D,
-                collideLayer = 11,
-                sendEvent = FsmEvent.GetFsmEvent("ORBHIT"),
-                collideTag = "",
-                storeCollider = new FsmGameObject()
-            });
-            orbcontrol.AddAction("Chase Enemy", new Wait
-            {
-                time = 3.5f,
-                finishEvent = FsmEvent.GetFsmEvent("DISSIPATE")
-            });
-
-            orbcontrol.GetAction<Wait>("Impact", 7).time = 0.1f;
-            orbcontrol.Fsm.SaveActions();
-        }
-        private void SetupBlast()
-        {
-            HKBlast.transform.position = HeroController.instance.transform.position;
-            GameObject blast;
-            var fsm = HKBlast.LocateMyFSM("Control");
-            var blastAction = fsm.GetAction<ActivateGameObject>("Blast", 0);
-            blast = Object.Instantiate(blastAction.gameObject.GameObject.Value);
-            blast.name = "MyBlast";
-            Object.DontDestroyOnLoad(blast);
-            blast.transform.SetParent(HKBlast.transform);
-            blast.transform.localPosition = new Vector3(0, 0, 0);
-            blast.SetActive(false);
-            var damager = blast.transform.Find("hero_damager");
-            Object.DestroyImmediate(damager.GetComponent<DamageHero>());
-            HKBlast.layer = (int)PhysLayers.HERO_ATTACK;
-            blast.layer = (int)PhysLayers.HERO_ATTACK;
-            damager.gameObject.layer = (int)PhysLayers.HERO_ATTACK;
-
-            AddDamageEnemy(damager.gameObject).circleDirection = true;
-
-            blastAction.gameObject.GameObject.Value = blast;
-            fsm.Fsm.SaveActions();
-
-            var hkblastfsm = HKBlast.LocateMyFSM("Control");
-            hkblastfsm.AddAction("Blast", () => {
-                Vector3 scale = new Vector3(1, 1, 1);
-                MaterialPropertyBlock prop = new MaterialPropertyBlock();
-                Color color = new Color(1, 1, 1);
-                if (PlayerData.instance != null)
-                {
-                    if (PlayerData.instance.equippedCharm_34)
-                    {
-                        scale.x *= 3;
-                        scale.y *= 3;
-                    }
-                    if (PlayerData.instance.equippedCharm_28)
-                    {
-                        scale.y *= 0.5f;
-                        scale.x *= 1.3f;
-                    }
-                    if (PlayerData.instance.equippedCharm_10)
-                    {
-                        color.r += 1;
-                        color.g += 1;
-                        color.b -= 1;
-                    }
-                    if (PlayerData.instance.healthBlue > 0)
-                    {
-                        color.b += 1;
-                    }
-
-                }
-
-                HKBlast.transform.localScale = scale;
-
-                prop.SetColor("_Color", color);
-                foreach (Transform t in blast.transform)
-                {
-                    var render = t.GetComponent<SpriteRenderer>();
-                    if (render != null)
-                        render.SetPropertyBlock(prop);
-                }
-
-            });
-            var idle = hkblastfsm.GetState("Idle");
-            idle.Transitions = new FsmTransition[] { };
-            hkblastfsm.Fsm.SaveActions();
-            HKBlast.SetActive(true);
-        }
-        private void SetupBeam()
-        {
-            var beamctrl = BeamSweeper.LocateMyFSM("Control");
-
-            var spawnbeam = beamctrl.GetAction<SpawnObjectFromGlobalPoolOverTime>("Beam Sweep R 2", 5);
-            var _beampre = spawnbeam.gameObject.Value;
-            var beamPre = Object.Instantiate(_beampre);
-            Object.DontDestroyOnLoad(beamPre);
-            beamPre.SetActive(false);
-            Object.DestroyImmediate(beamPre.GetComponent<DamageHero>());
-            AddDamageEnemy(beamPre).direction = 90;
-            spawnbeam.gameObject.Value = beamPre;
-            BeamSweeper.layer = (int)PhysLayers.HERO_ATTACK;
-            beamPre.layer = (int)PhysLayers.HERO_ATTACK;
-            var myspawnbeam = new MySpawnObjectFromGlobalPoolOverTime
-            {
-                gameObject = spawnbeam.gameObject,
-                spawnPoint = spawnbeam.spawnPoint,
-                position = new Vector3(0, 0, 0),
-                rotation = new Vector3(0, 0, 0),
-                frequency = 0.075f
-            };
-            beamctrl.ReplaceAction("Beam Sweep R 2", 4, () => {
-                if (HeroController.instance != null)
-                {
-                    Vector3 heropos = HeroController.instance.transform.position;
-                    heropos.y -= 10;
-                    heropos.x -= 30;
-                    BeamSweeper.transform.position = heropos;
-                }
-            });
-            beamctrl.ReplaceAction("Beam Sweep R 2", 5, myspawnbeam);
-
-            beamctrl.GetAction<iTweenMoveBy>("Beam Sweep R 2", 6).vector = new Vector3(0, 50, 0);
-
-            var idle = beamctrl.GetState("Idle");
-            idle.Transitions = new FsmTransition[] { };
-            beamctrl.Fsm.SaveActions();
-            BeamSweeper.SetActive(true);
-        }
-        private void SetupSpike()
-        {
-            Object.DestroyImmediate(SpikePre.LocateMyFSM("Hero Saver"));
-            Object.DestroyImmediate(SpikePre.GetComponent<DamageHero>());
-            AddDamageEnemy(SpikePre).damageDealt = 5;
-
-            var spikectrl = SpikePre.LocateMyFSM("Control");
-            spikectrl.RemoveTransition("Up", "DOWN");
-            spikectrl.RemoveTransition("Up", "SPIKES DOWN");
-            spikectrl.AddAction("Up", new Wait { time = 0.4f, finishEvent = FsmEvent.Finished });
-            var downed = spikectrl.GetState("Downed");
-            var floor_antic = spikectrl.GetState("Floor Antic");
-            var spike_up = spikectrl.GetState("Spike Up");
-            var up = spikectrl.GetState("Up");
-
-            downed.Transitions = new FsmTransition[] { };
-            floor_antic.Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Spike Up" } };
-            spike_up.Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Up" } };
-            up.Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Down" } };
-            spikectrl.AddTransition("Downed", "HEROSPIKEUP", "Floor Antic");
-
-            spikectrl.Fsm.SaveActions();
-            SpikeCenter = new GameObject { name = "HeroSpikeCenter", layer = 23, active = true };
-            Object.DontDestroyOnLoad(SpikeCenter);
-            SpikeCenter.transform.position = HeroController.instance.transform.position;
+            SaveGameSave();
+            GameManager.instance.StartCoroutine(ChangeSprites());
+            GameManager.instance.StartCoroutine(WaitHero(() => SetupTrigger()));
         }
 
         private IEnumerator ChangeSprites()
@@ -651,6 +424,213 @@ namespace Lightbringer
             return amount;
         }
 
+        private void SetupTrigger()
+        {
+            var spellctrl = HeroController.instance.spellControl;
+            spellctrl.AddAction("Focus", () => {
+                HKBlast.transform.position = HeroController.instance.transform.position;
+                HKBlast.LocateMyFSM("Control").SetState("Blast");
+            });
+
+            spellctrl.ReplaceAction("Scream Burst 2", 8, () => {
+                var beamctrl = BeamSweeper.LocateMyFSM("Control");
+                beamctrl.SetState("Beam Sweep R 2");
+            });
+            spellctrl.RemoveAction("Scream Burst 2", 3);
+            spellctrl.RemoveAction("Scream Burst 2", 1);
+            spellctrl.RemoveAction("Scream Burst 2", 0);
+
+            spellctrl.ReplaceAction("Fireball 2", 3, () => {
+                HeroController.instance.StartCoroutine(SpawnOrb());
+            });
+            spellctrl.ReplaceTransition("Fireball 2", "FINISHED", "Spell End");
+
+            spellctrl.AddAction("Q2 Land", () => {
+                int n = 10;
+                float spacing = 0.8f;
+                int dmgAmount = 5;
+                Vector3 scale = new Vector3(1.0f, 0.7f, 0.9f);
+                Vector3 pos = HeroController.instance.transform.position;
+                if (PlayerData.instance.equippedCharm_19)
+                {
+                    n += 5;
+                    dmgAmount += 5;
+                }
+                SpikePre.transform.localScale = scale;
+                SpikePre.GetComponent<DamageEnemies>().damageDealt = dmgAmount;
+                SpikeCenter.transform.position = pos;
+                SpawnSpike(n, spacing);
+            });
+
+            spellctrl.Fsm.SaveActions();
+        }
+
+        private void SetupSpells()
+        {
+            GameManager.instance.StartCoroutine(WaitHero(() => {
+                SetupOrb();
+                SetupBeam();
+                SetupBlast();
+                SetupSpike();
+            }));
+        }
+        private void SetupOrb()
+        {
+            var orb = orbPre;
+            orb.layer = 17;   // PhysLayers.HERO_ATTACK
+            AddDamageEnemy(orb, 30);
+
+            var orbcontrol = orb.LocateMyFSM("Orb Control");
+
+            orbcontrol.AddState("Chase Enemy");
+
+            orbcontrol.ReplaceTransition("Init", "FIRE", "Chase Enemy");
+            orbcontrol.ReplaceTransition("Init", "FINISHED", "Chase Enemy");
+
+            orbcontrol.AddTransition("Chase Enemy", "ORBHIT", "Impact pause");
+            orbcontrol.AddTransition("Chase Enemy", "DISSIPATE", "Dissipate");
+
+            orbcontrol.RemoveState("Orbiting");
+            orbcontrol.RemoveState("Chase Hero");
+
+            orbcontrol.AddAction("Chase Enemy", new Trigger2dEventLayer
+            {
+                trigger = PlayMakerUnity2d.Trigger2DType.OnTriggerEnter2D,
+                collideLayer = 11,
+                sendEvent = FsmEvent.GetFsmEvent("ORBHIT"),
+                collideTag = "",
+                storeCollider = new FsmGameObject()
+            });
+            orbcontrol.AddAction("Chase Enemy", new Trigger2dEventLayer
+            {
+                trigger = PlayMakerUnity2d.Trigger2DType.OnTriggerStay2D,
+                collideLayer = 11,
+                sendEvent = FsmEvent.GetFsmEvent("ORBHIT"),
+                collideTag = "",
+                storeCollider = new FsmGameObject()
+            });
+            orbcontrol.AddAction("Chase Enemy", new Wait
+            {
+                time = 3.5f,
+                finishEvent = FsmEvent.GetFsmEvent("DISSIPATE")
+            });
+
+            orbcontrol.GetAction<Wait>("Impact", 7).time = 0.1f;
+            orbcontrol.Fsm.SaveActions();
+        }
+        private void SetupBlast()
+        {
+            HKBlast.transform.position = HeroController.instance.transform.position;
+            GameObject blast;
+            var fsm = HKBlast.LocateMyFSM("Control");
+            var blastAction = fsm.GetAction<ActivateGameObject>("Blast", 0);
+            blast = Object.Instantiate(blastAction.gameObject.GameObject.Value);
+            blast.name = "MyBlast";
+            Object.DontDestroyOnLoad(blast);
+            blast.transform.SetParent(HKBlast.transform);
+            blast.transform.localPosition = new Vector3(0, 0, 0);
+            blast.SetActive(false);
+            var damager = blast.transform.Find("hero_damager");
+            Object.DestroyImmediate(damager.GetComponent<DamageHero>());
+            HKBlast.layer = (int)PhysLayers.HERO_ATTACK;
+            blast.layer = (int)PhysLayers.HERO_ATTACK;
+            damager.gameObject.layer = (int)PhysLayers.HERO_ATTACK;
+
+            AddDamageEnemy(damager.gameObject).circleDirection = true;
+
+            blastAction.gameObject.GameObject.Value = blast;
+            fsm.Fsm.SaveActions();
+
+            var hkblastfsm = HKBlast.LocateMyFSM("Control");
+            hkblastfsm.AddAction("Blast", () => {
+                Vector3 scale = new Vector3(1, 1, 1);
+                MaterialPropertyBlock prop = new MaterialPropertyBlock();
+                if (PlayerData.instance != null)
+                    if (PlayerData.instance.equippedCharm_34)
+                        scale *= 3;
+
+                HKBlast.transform.localScale = scale;
+
+                foreach (Transform t in blast.transform)
+                {
+                    var render = t.GetComponent<SpriteRenderer>();
+                    if (render != null)
+                        render.SetPropertyBlock(prop);
+                }
+
+            });
+            var idle = hkblastfsm.GetState("Idle");
+            idle.Transitions = new FsmTransition[] { };
+            hkblastfsm.Fsm.SaveActions();
+            HKBlast.SetActive(true);
+        }
+        private void SetupBeam()
+        {
+            var beamctrl = BeamSweeper.LocateMyFSM("Control");
+
+            var spawnbeam = beamctrl.GetAction<SpawnObjectFromGlobalPoolOverTime>("Beam Sweep R 2", 5);
+            var _beampre = spawnbeam.gameObject.Value;
+            var beamPre = Object.Instantiate(_beampre);
+            Object.DontDestroyOnLoad(beamPre);
+            beamPre.SetActive(false);
+            Object.DestroyImmediate(beamPre.GetComponent<DamageHero>());
+            AddDamageEnemy(beamPre).direction = 90;
+            spawnbeam.gameObject.Value = beamPre;
+            BeamSweeper.layer = (int)PhysLayers.HERO_ATTACK;
+            beamPre.layer = (int)PhysLayers.HERO_ATTACK;
+            var myspawnbeam = new MySpawnObjectFromGlobalPoolOverTime
+            {
+                gameObject = spawnbeam.gameObject,
+                spawnPoint = spawnbeam.spawnPoint,
+                position = new Vector3(0, 0, 0),
+                rotation = new Vector3(0, 0, 0),
+                frequency = 0.075f
+            };
+            beamctrl.ReplaceAction("Beam Sweep R 2", 4, () => {
+                if (HeroController.instance != null)
+                {
+                    Vector3 heropos = HeroController.instance.transform.position;
+                    heropos.y -= 10;
+                    heropos.x -= 30;
+                    BeamSweeper.transform.position = heropos;
+                }
+            });
+            beamctrl.ReplaceAction("Beam Sweep R 2", 5, myspawnbeam);
+
+            beamctrl.GetAction<iTweenMoveBy>("Beam Sweep R 2", 6).vector = new Vector3(0, 50, 0);
+
+            var idle = beamctrl.GetState("Idle");
+            idle.Transitions = new FsmTransition[] { };
+            beamctrl.Fsm.SaveActions();
+            BeamSweeper.SetActive(true);
+        }
+        private void SetupSpike()
+        {
+            Object.DestroyImmediate(SpikePre.LocateMyFSM("Hero Saver"));
+            Object.DestroyImmediate(SpikePre.GetComponent<DamageHero>());
+            AddDamageEnemy(SpikePre).damageDealt = 5;
+
+            var spikectrl = SpikePre.LocateMyFSM("Control");
+            spikectrl.RemoveTransition("Up", "DOWN");
+            spikectrl.RemoveTransition("Up", "SPIKES DOWN");
+            spikectrl.AddAction("Up", new Wait { time = 0.4f, finishEvent = FsmEvent.Finished });
+            var downed = spikectrl.GetState("Downed");
+            var floor_antic = spikectrl.GetState("Floor Antic");
+            var spike_up = spikectrl.GetState("Spike Up");
+            var up = spikectrl.GetState("Up");
+
+            downed.Transitions = new FsmTransition[] { };
+            floor_antic.Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Spike Up" } };
+            spike_up.Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Up" } };
+            up.Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Down" } };
+            spikectrl.AddTransition("Downed", "HEROSPIKEUP", "Floor Antic");
+
+            spikectrl.Fsm.SaveActions();
+            SpikeCenter = new GameObject { name = "HeroSpikeCenter", layer = 23, active = true };
+            Object.DontDestroyOnLoad(SpikeCenter);
+            SpikeCenter.transform.position = HeroController.instance.transform.position;
+        }
+
         public IEnumerator SpawnOrb()
         {
             var spawnPoint = new Vector3(HeroController.instance.transform.position.x + UnityEngine.Random.Range(-2, 2), HeroController.instance.transform.position.y + 2 + UnityEngine.Random.Range(-3, 2));
@@ -676,22 +656,21 @@ namespace Lightbringer
             if (PlayerData.instance != null && PlayerData.instance.equippedCharm_11)
             {
                 var scale = orb.transform.localScale;
-                scale.x *= 0.5f;
-                scale.y *= 0.5f;
+                scale *= 0.5f;
                 yield return new WaitForSeconds(0.5f);
 
-                var another_orb = orbPre.Spawn();
-                another_orb.transform.position = spawnPoint;
-                another_orb.AddComponent<OrbChaseObject>();
-                another_orb.SetActive(true);
-                another_orb.transform.localScale = scale;
+                var miniOrb = orbPre.Spawn();
+                miniOrb.transform.position = spawnPoint;
+                miniOrb.AddComponent<OrbChaseObject>();
+                miniOrb.SetActive(true);
+                miniOrb.transform.localScale = scale;
                 yield return new WaitForSeconds(0.3f);
 
-                another_orb = orbPre.Spawn();
-                another_orb.transform.position = spawnPoint;
-                another_orb.AddComponent<OrbChaseObject>();
-                another_orb.SetActive(true);
-                another_orb.transform.localScale = scale;
+                miniOrb = orbPre.Spawn();
+                miniOrb.transform.position = spawnPoint;
+                miniOrb.AddComponent<OrbChaseObject>();
+                miniOrb.SetActive(true);
+                miniOrb.transform.localScale = scale;
             }
             orb.SetActive(true);
 
@@ -708,7 +687,7 @@ namespace Lightbringer
         {
             _spikes.Clear();
 
-            float x = -1 * ((n * spacing) / 2);
+            float x = -1 * (n * spacing / 2);
             for (int i = 0; i < n; i++)
             {
                 GameObject s = Object.Instantiate(SpikePre);
@@ -766,12 +745,12 @@ namespace Lightbringer
                 orig(self, amount);
         }
 
-        public DamageEnemies AddDamageEnemy(GameObject go)
+        public DamageEnemies AddDamageEnemy(GameObject go, int damage = 20)
         {
             var dmg = go.AddComponent<DamageEnemies>();
             dmg.attackType = AttackTypes.Spell;
             dmg.circleDirection = false;
-            dmg.damageDealt = 20;
+            dmg.damageDealt = damage;
             dmg.direction = 90 * 3;
             dmg.ignoreInvuln = false;
             dmg.magnitudeMult = 1f;
