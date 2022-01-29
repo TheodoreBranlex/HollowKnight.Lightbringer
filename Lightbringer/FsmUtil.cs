@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HutongGames.PlayMaker;
 
-// Taken and modified from
-// https://raw.githubusercontent.com/KayDeeTee/HK-NGG/master/src/
+// The author of the original probably prefers to remain anonymous
 
 namespace Lightbringer
 {
