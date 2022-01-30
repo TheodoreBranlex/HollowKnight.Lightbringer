@@ -346,13 +346,11 @@ namespace Lightbringer
 
             HeroController.instance.grubberFlyBeamPrefabL.GetComponent<tk2dSprite>()
                           .GetCurrentSpriteDef()
-                          .material
-                          .mainTexture = Sprites["Lances"].texture;
+                          .material.mainTexture = Sprites["Lances"].texture;
 
             HeroController.instance.gameObject.GetComponent<tk2dSprite>()
                           .GetCurrentSpriteDef()
-                          .material
-                          .mainTexture = Sprites["Knight"].texture;
+                          .material.mainTexture = Sprites["Knight"].texture;
 
             HeroController.instance.gameObject.GetComponent<tk2dSpriteAnimator>()
                           .GetClipByName("Sprint")
@@ -360,7 +358,31 @@ namespace Lightbringer
                           .spriteCollection.spriteDefinitions[0]
                           .material.mainTexture = Sprites["Sprint"].texture;
 
-            var invNail = GameObject.Find("/_GameCameras/HudCamera/Inventory/Inv/Inv_Items/Nail");
+            GameObject.Find("/Knight/Effects/Damage Effect/Leak")
+                .GetComponent<ParticleSystemRenderer>()
+                .material.mainTexture = Sprites["Void"].texture;
+
+            GameObject.Find("/Knight/Effects/Damage Effect/Hit Pt 1")
+                .GetComponent<ParticleSystemRenderer>()
+                .material.mainTexture = Sprites["Void"].texture;
+
+            GameObject.Find("/Knight/Effects/Damage Effect/Hit Pt 2")
+                .GetComponent<ParticleSystemRenderer>()
+                .material.mainTexture = Sprites["Void"].texture;
+
+            GameObject.Find("/Knight/Effects/Shadow Dash Blobs")
+                .GetComponent<ParticleSystemRenderer>()
+                .material.mainTexture = Sprites["Void"].texture;
+
+            foreach (Transform child in HeroController.instance.transform)
+                if (child.name == "Spells")
+                    foreach (Transform spellsChild in child)
+                        if (spellsChild.name == "Scr Heads 2" || spellsChild.name == "Scr Base 2")
+                            spellsChild.gameObject.GetComponent<tk2dSprite>()
+                                .GetCurrentSpriteDef()
+                                .material.mainTexture = Sprites["VoidSpells"].texture;
+
+                    var invNail = GameObject.Find("/_GameCameras/HudCamera/Inventory/Inv/Inv_Items/Nail");
             var invNailSprite = invNail.GetComponent<InvNailSprite>();
 
             invNailSprite.level1 = Sprites["LanceInv"];

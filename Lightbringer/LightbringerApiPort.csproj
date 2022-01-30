@@ -84,6 +84,8 @@
         <EmbeddedResource Include="Resources\LanceInv.png" />
         <EmbeddedResource Include="Resources\Knight.png" />
         <EmbeddedResource Include="Resources\Sprint.png" />
+		<EmbeddedResource Include="Resources\VoidSpells.png" />
+		<EmbeddedResource Include="Resources\Void.png" />
         <EmbeddedResource Include="Resources\UI.png" />
     </ItemGroup>
 </Project>
