@@ -52,13 +52,14 @@ namespace Lightbringer
         public static SpriteFlash _SpriteFlash;
 
         GameObject orbPre;
+        GameObject[] orbs = { null, null };
         GameObject ShotCharge;
         GameObject ShotCharge2;
         GameObject BeamSweeper;
         GameObject HKBlast;
         GameObject SpikePre;
         GameObject SpikeCenter;
-        private readonly List<GameObject> _spikes = new List<GameObject>();
+        List<GameObject> spikes = new List<GameObject>();
 
         public LightbringerSettings Settings = new LightbringerSettings();
         public void OnLoadGlobal(LightbringerSettings s) => Settings = s;
@@ -685,10 +686,15 @@ namespace Lightbringer
 
                 yield return new WaitForSeconds(0.2f);
 
+                if (orbs[i]?.transform?.parent?.name != "GlobalPool")
+                    Object.Destroy(orbs[i]);
+
                 var orb = orbPre.Spawn();
                 orb.transform.position = spawnPoint;
                 orb.AddComponent<OrbChaseObject>();
                 orb.SetActive(true);
+
+                orbs[i] = orb;
 
                 em.enabled = false;
                 em2.enabled = false;
@@ -699,12 +705,14 @@ namespace Lightbringer
         private void SpawnSpike(int n = 10, float spacing = 0.8f)
         {
             AddSpikeToPool(n, spacing);
-            foreach (var s in _spikes)
+            foreach (var s in spikes)
                 s.LocateMyFSM("Control").SendEvent("HEROSPIKEUP");
         }
         private bool AddSpikeToPool(int n = 10, float spacing = 0.8f)
         {
-            _spikes.Clear();
+            foreach (var s in spikes)
+                Object.Destroy(s);
+            spikes.Clear();
 
             float x = -1 * (n * spacing / 2);
             for (int i = 0; i < n; i++)
@@ -713,7 +721,7 @@ namespace Lightbringer
                 s.transform.SetParent(SpikeCenter.transform);
                 s.transform.localPosition = new Vector3(x, -0.4f, 0);
                 x += spacing;
-                _spikes.Add(s);
+                spikes.Add(s);
                 s.SetActive(true);
             }
             return true;
