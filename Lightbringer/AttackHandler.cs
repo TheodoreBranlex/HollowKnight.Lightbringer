@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using GlobalEnums;
 using Modding;
+using HutongGames.PlayMaker;
+using HutongGames.PlayMaker.Actions;
 using UnityEngine;
 using static Lightbringer.AttackHandler.BeamDirection;
 using Random = System.Random;
@@ -126,7 +128,9 @@ namespace Lightbringer
                         if (pd.MPCharge > 10)
                         {
                             if (!_crit) hc.TakeMP(10);
-                            hc.spell1Prefab.Spawn(hc.transform.position + (tShell ? new Vector3(0f, .6f) : new Vector3(0f, .3f)));
+                            var instance = hc.spell1Prefab.Spawn(hc.transform.position + (tShell ? new Vector3(0f, .6f) : new Vector3(0f, .3f)));
+                            instance.LocateMyFSM("Fireball Cast").GetAction<PlayerDataBoolTest>("Cast Right", 5).isTrue = FsmEvent.GetFsmEvent("");
+                            instance.LocateMyFSM("Fireball Cast").GetAction<PlayerDataBoolTest>("Cast Left", 2).isTrue = FsmEvent.GetFsmEvent("");
                         }
                         else
                         {

@@ -17,8 +17,6 @@ using Random = System.Random;
 using IntCompare = On.HutongGames.PlayMaker.Actions.IntCompare;
 using USceneManager = UnityEngine.SceneManagement.SceneManager;
 
-// ReSharper disable CompareOfFloatsByEqualityOperator
-
 namespace Lightbringer
 {
     [UsedImplicitly]
@@ -74,36 +72,6 @@ namespace Lightbringer
             GetPrefabs(preloadedObjects);
             SetupSpells();
             RegisterCallbacks();
-        }
-
-        public void Unload()
-        {
-            On.HeroController.FaceLeft -= TinyShell.FaceLeft;
-            On.HeroController.FaceRight -= TinyShell.FaceRight;
-            IntCompare.DoIntCompare -= DoIntCompare;
-            On.ShopItemStats.Awake -= Awake;
-            On.HeroController.Attack -= Attack;
-            On.PlayerData.AddGeo -= AddGeo;
-            On.NailSlash.StartSlash -= StartSlash;
-            On.PlayerData.UpdateBlueHealth -= UpdateBlueHealth;
-            On.HeroController.RecoilLeft -= RecoilLeft;
-            On.HeroController.RecoilRight -= RecoilRight;
-            ModHooks.BeforeSavegameSaveHook -= BeforeSaveGameSave;
-            ModHooks.AfterSavegameLoadHook -= AfterSaveGameLoad;
-            ModHooks.SavegameSaveHook -= SaveGameSave;
-            ModHooks.NewGameHook -= OnNewGame;
-            ModHooks.TakeHealthHook -= Health;
-            ModHooks.DoAttackHook -= DoAttack;
-            ModHooks.AfterAttackHook -= AfterAttack;
-            ModHooks.TakeHealthHook -= TakeHealth;
-            ModHooks.SoulGainHook -= SoulGain;
-            ModHooks.HeroUpdateHook -= Update;
-            ModHooks.CharmUpdateHook -= CharmUpdate;
-            ModHooks.LanguageGetHook -= LangGet;
-            USceneManager.sceneLoaded -= SceneLoadedHook;
-
-            if (PlayerData.instance != null)
-                BeforeSaveGameSave();
         }
 
         private void Attack(On.HeroController.orig_Attack orig, HeroController self, AttackDirection attackdir)
@@ -247,6 +215,36 @@ namespace Lightbringer
             Log("Finished loading all images in " + overall.ElapsedMilliseconds + "ms");
         }
 
+        public void Unload()
+        {
+            On.HeroController.FaceLeft -= TinyShell.FaceLeft;
+            On.HeroController.FaceRight -= TinyShell.FaceRight;
+            IntCompare.DoIntCompare -= DoIntCompare;
+            On.ShopItemStats.Awake -= Awake;
+            On.HeroController.Attack -= Attack;
+            On.PlayerData.AddGeo -= AddGeo;
+            On.NailSlash.StartSlash -= StartSlash;
+            On.PlayerData.UpdateBlueHealth -= UpdateBlueHealth;
+            On.HeroController.RecoilLeft -= RecoilLeft;
+            On.HeroController.RecoilRight -= RecoilRight;
+            ModHooks.BeforeSavegameSaveHook -= BeforeSaveGameSave;
+            ModHooks.AfterSavegameLoadHook -= AfterSaveGameLoad;
+            ModHooks.SavegameSaveHook -= SaveGameSave;
+            ModHooks.NewGameHook -= OnNewGame;
+            ModHooks.TakeHealthHook -= Health;
+            ModHooks.DoAttackHook -= DoAttack;
+            ModHooks.AfterAttackHook -= AfterAttack;
+            ModHooks.TakeHealthHook -= TakeHealth;
+            ModHooks.SoulGainHook -= SoulGain;
+            ModHooks.HeroUpdateHook -= Update;
+            ModHooks.CharmUpdateHook -= CharmUpdate;
+            ModHooks.LanguageGetHook -= LangGet;
+            USceneManager.sceneLoaded -= SceneLoadedHook;
+
+            if (PlayerData.instance != null)
+                BeforeSaveGameSave();
+        }
+
         private void GetPrefabs(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
             var abs = preloadedObjects["GG_Radiance"]["Boss Control/Absolute Radiance"];
@@ -319,15 +317,15 @@ namespace Lightbringer
 
         private IEnumerator ChangeSprites()
         {
-            while (CharmIconList.Instance                       == null ||
-                   GameManager.instance                         == null ||
-                   HeroController.instance                      == null ||
-                   HeroController.instance.geoCounter           == null ||
+            while (CharmIconList.Instance == null ||
+                   GameManager.instance == null ||
+                   HeroController.instance == null ||
+                   HeroController.instance.geoCounter == null ||
                    HeroController.instance.geoCounter.geoSprite == null ||
-                   Sprites.Count                                < 22)
+                   Sprites.Count < 22)
                 yield return null;
 
-            foreach (int i in new int[] {2, 3, 4, 6, 8, 13, 14, 15, 18, 19, 20, 21, 25, 26, 35}) CharmIconList.Instance.spriteList[i] = Sprites["Charms." + i];
+            foreach (int i in new int[] { 2, 3, 4, 6, 8, 11, 13, 14, 15, 17, 18, 19, 20, 21, 25, 26, 35 }) CharmIconList.Instance.spriteList[i] = Sprites["Charms." + i];
 
             HeroController.instance.geoCounter.geoSprite.GetComponent<tk2dSprite>()
                           .GetCurrentSpriteDef()
@@ -358,18 +356,6 @@ namespace Lightbringer
                           .spriteCollection.spriteDefinitions[0]
                           .material.mainTexture = Sprites["Sprint"].texture;
 
-            GameObject.Find("/Knight/Effects/Damage Effect/Leak")
-                .GetComponent<ParticleSystemRenderer>()
-                .material.mainTexture = Sprites["Void"].texture;
-
-            GameObject.Find("/Knight/Effects/Damage Effect/Hit Pt 1")
-                .GetComponent<ParticleSystemRenderer>()
-                .material.mainTexture = Sprites["Void"].texture;
-
-            GameObject.Find("/Knight/Effects/Damage Effect/Hit Pt 2")
-                .GetComponent<ParticleSystemRenderer>()
-                .material.mainTexture = Sprites["Void"].texture;
-
             GameObject.Find("/Knight/Effects/Shadow Dash Blobs")
                 .GetComponent<ParticleSystemRenderer>()
                 .material.mainTexture = Sprites["Void"].texture;
@@ -382,7 +368,7 @@ namespace Lightbringer
                                 .GetCurrentSpriteDef()
                                 .material.mainTexture = Sprites["VoidSpells"].texture;
 
-                    var invNail = GameObject.Find("/_GameCameras/HudCamera/Inventory/Inv/Inv_Items/Nail");
+            var invNail = GameObject.Find("/_GameCameras/HudCamera/Inventory/Inv/Inv_Items/Nail");
             var invNailSprite = invNail.GetComponent<InvNailSprite>();
 
             invNailSprite.level1 = Sprites["LanceInv"];
@@ -431,9 +417,9 @@ namespace Lightbringer
             {
                 int missingHealth = PlayerData.instance.maxHealth -
                                     PlayerData.instance.health;
-                panicSpeed += missingHealth                     * .03f;
-                hc.RUN_SPEED = ORIG_RUN_SPEED                   * panicSpeed;
-                hc.RUN_SPEED_CH = ORIG_RUN_SPEED_CH             * panicSpeed;
+                panicSpeed += missingHealth * .03f;
+                hc.RUN_SPEED = ORIG_RUN_SPEED * panicSpeed;
+                hc.RUN_SPEED_CH = ORIG_RUN_SPEED_CH * panicSpeed;
                 hc.RUN_SPEED_CH_COMBO = ORIG_RUN_SPEED_CH_COMBO * panicSpeed;
             }
             else
@@ -450,9 +436,13 @@ namespace Lightbringer
         {
             var spellctrl = HeroController.instance.spellControl;
             spellctrl.AddAction("Focus", () => {
-                HKBlast.transform.position = HeroController.instance.transform.position;
-                HKBlast.LocateMyFSM("Control").SetState("Blast");
+                if (PlayerData.instance.equippedCharm_17)
+                {
+                    HKBlast.transform.position = HeroController.instance.transform.position;
+                    HKBlast.LocateMyFSM("Control").SetState("Blast");
+                }
             });
+            spellctrl.ReplaceTransition("Focus", "FOCUS COMPLETED", "Set HP Amount");
 
             spellctrl.ReplaceAction("Scream Burst 2", 8, () => {
                 var beamctrl = BeamSweeper.LocateMyFSM("Control");
@@ -461,6 +451,10 @@ namespace Lightbringer
             spellctrl.RemoveAction("Scream Burst 2", 3);
             spellctrl.RemoveAction("Scream Burst 2", 1);
             spellctrl.RemoveAction("Scream Burst 2", 0);
+
+            spellctrl.ReplaceAction("Fireball 1", 3, () => {
+                HeroController.instance.StartCoroutine(SpawnFireball());
+            });
 
             spellctrl.ReplaceAction("Fireball 2", 3, () => {
                 HeroController.instance.StartCoroutine(SpawnOrb());
@@ -567,9 +561,8 @@ namespace Lightbringer
             hkblastfsm.AddAction("Blast", () => {
                 Vector3 scale = new Vector3(1, 1, 1);
                 MaterialPropertyBlock prop = new MaterialPropertyBlock();
-                if (PlayerData.instance != null)
-                    if (PlayerData.instance.equippedCharm_34)
-                        scale *= 3;
+                if (PlayerData.instance.equippedCharm_34)
+                    scale *= 3;
 
                 HKBlast.transform.localScale = scale;
 
@@ -653,51 +646,55 @@ namespace Lightbringer
             SpikeCenter.transform.position = HeroController.instance.transform.position;
         }
 
+        private IEnumerator SpawnFireball()
+        {
+            Vector3 position = HeroController.instance.transform.position + (PlayerData.instance.equippedCharm_4 ? new Vector3(0f, .6f) : new Vector3(0f, .3f));
+            var fireballCast = HeroController.instance.spell1Prefab.Spawn(position).LocateMyFSM("Fireball Cast");
+
+            fireballCast.GetAction<PlayerDataBoolTest>("Cast Right", 5).isTrue = FsmEvent.GetFsmEvent("");
+            fireballCast.GetAction<PlayerDataBoolTest>("Cast Left", 2).isTrue = FsmEvent.GetFsmEvent("");
+
+            if (PlayerData.instance.equippedCharm_11)
+            {
+                yield return new WaitForSeconds(0.1f);
+                
+                GameObject fireball = fireballCast.GetAction<SpawnObjectFromGlobalPool>("Cast Right", 7).gameObject.Value;
+                position = HeroController.instance.transform.position - (PlayerData.instance.equippedCharm_4 ? new Vector3(0f, .6f) : new Vector3(0f, .3f));
+                var miniball = fireball.Spawn(position);
+
+                Vector2 velocity = new Vector2(fireballCast.FsmVariables.GetFsmFloat("Fire Speed").Value, 0);
+                velocity *= HeroController.instance.cState.facingRight ? 1 : -1;
+                miniball.GetComponent<Rigidbody2D>().velocity = velocity;
+            }
+        }
         public IEnumerator SpawnOrb()
         {
-            var spawnPoint = new Vector3(HeroController.instance.transform.position.x + UnityEngine.Random.Range(-2, 2), HeroController.instance.transform.position.y + 2 + UnityEngine.Random.Range(-3, 2));
-            var ShotCharge = Object.Instantiate(this.ShotCharge);
-            var ShotCharge2 = Object.Instantiate(this.ShotCharge2);
-            ShotCharge.transform.position = spawnPoint;
-            ShotCharge2.transform.position = spawnPoint;
-            ShotCharge.SetActive(true);
-            ShotCharge2.SetActive(true);
-            var em = ShotCharge.GetComponent<ParticleSystem>().emission;
-            var em2 = ShotCharge2.GetComponent<ParticleSystem>().emission;
-            em.enabled = true;
-            em2.enabled = true;
-
-            if (PlayerData.instance != null && PlayerData.instance.equippedCharm_33)
-                yield return new WaitForSeconds(0.2f);
-            else
-                yield return new WaitForSeconds(0.8f);
-            var orb = orbPre.Spawn();
-            orb.transform.position = spawnPoint;
-
-            orb.AddComponent<OrbChaseObject>();
-            if (PlayerData.instance != null && PlayerData.instance.equippedCharm_11)
+            for (int i = 0; i < (PlayerData.instance.equippedCharm_11 ? 2 : 1); i++)
             {
-                var scale = orb.transform.localScale;
-                scale *= 0.5f;
-                yield return new WaitForSeconds(0.5f);
+                var spawnPoint = new Vector3(HeroController.instance.transform.position.x + UnityEngine.Random.Range(-2, 2), HeroController.instance.transform.position.y + 2 + UnityEngine.Random.Range(-3, 2));
+                var ShotCharge = Object.Instantiate(this.ShotCharge);
+                var ShotCharge2 = Object.Instantiate(this.ShotCharge2);
+                ShotCharge.transform.position = spawnPoint;
+                ShotCharge2.transform.position = spawnPoint;
+                ShotCharge.SetActive(true);
+                ShotCharge2.SetActive(true);
+                var em = ShotCharge.GetComponent<ParticleSystem>().emission;
+                var em2 = ShotCharge2.GetComponent<ParticleSystem>().emission;
+                em.enabled = true;
+                em2.enabled = true;
 
-                var miniOrb = orbPre.Spawn();
-                miniOrb.transform.position = spawnPoint;
-                miniOrb.AddComponent<OrbChaseObject>();
-                miniOrb.SetActive(true);
-                miniOrb.transform.localScale = scale;
+                yield return new WaitForSeconds(0.2f);
+
+                var orb = orbPre.Spawn();
+                orb.transform.position = spawnPoint;
+                orb.AddComponent<OrbChaseObject>();
+                orb.SetActive(true);
+
+                em.enabled = false;
+                em2.enabled = false;
+
                 yield return new WaitForSeconds(0.3f);
-
-                miniOrb = orbPre.Spawn();
-                miniOrb.transform.position = spawnPoint;
-                miniOrb.AddComponent<OrbChaseObject>();
-                miniOrb.SetActive(true);
-                miniOrb.transform.localScale = scale;
             }
-            orb.SetActive(true);
-
-            em.enabled = false;
-            em2.enabled = false;
         }
         private void SpawnSpike(int n = 10, float spacing = 0.8f)
         {

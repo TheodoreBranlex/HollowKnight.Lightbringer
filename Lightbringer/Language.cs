@@ -7,6 +7,8 @@ namespace Lightbringer {
         {
             #region Charm Descriptions
 
+            ["CHARM_DESC_11"] =
+                "Charm born of the power to divide one's own self.\n\nIts bearer shall cast the Vengeful Spirit twice.",
             ["CHARM_DESC_13"] =
                 "Trophy given to those proven to be worthy. A requirement for any who wish to master the nail.\n\nGreatly increases the range of the bearer's nail and causes it to deal more damage based on what they have accomplished.",
             ["CHARM_DESC_14"] =
@@ -14,7 +16,7 @@ namespace Lightbringer {
             ["CHARM_DESC_15"] =
                 "A small trinket made of valuable metal and precious stone.\n\nLanding five successful nail attacks on an enemy will restore health.",
             ["CHARM_DESC_17"] =
-                "Composed of living fungal matter. Scatters spores when exposed to SOUL.\n\nWhen focusing SOUL, emit a spore cloud that slowly damages enemies. Increases SOUL regeneration rate slightly.",
+                "Radiates an intense flash of light when exposed to SOUL.\n\nWhen focusing SOUL, emit a blast of light that damages enemies. Increases SOUL regeneration rate slightly.",
             ["CHARM_DESC_18"] = "A metal badge that is cold to the touch. It brings back warm memories.\n\nFire lances in both directions when attacking.",
             ["CHARM_DESC_20"] =
                 "A token given to those embarking on a great journey.\n\nSplit the lance attack into two projectiles, allowing the user to hit multiple enemies at once (cannot hit the same enemy twice).",
@@ -92,9 +94,11 @@ namespace Lightbringer {
             ["CHARM_NAME_4"] = "Tiny Shell",
             ["CHARM_NAME_6"] = "Glass Soul",
             ["CHARM_NAME_8"] = "Rising Light",
+            ["CHARM_NAME_11"] = "Cleaved Spirit",
             ["CHARM_NAME_13"] = "Burning Pride",
             ["CHARM_NAME_14"] = "Time Fracture",
             ["CHARM_NAME_15"] = "Bloodlust",
+            ["CHARM_NAME_17"] = "Light Blast",
             ["CHARM_NAME_18"] = "Silent Divide",
             ["CHARM_NAME_19"] = "Eye of the Storm",
             ["CHARM_NAME_20"] = "Twin Fangs",

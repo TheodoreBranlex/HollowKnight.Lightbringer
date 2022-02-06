@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using HutongGames.PlayMaker;
@@ -35,7 +36,6 @@ namespace Lightbringer
                 if (t.Name != stateName) continue;
                 return t.Actions[index];
             }
-
             return null;
         }
 
@@ -81,6 +81,7 @@ namespace Lightbringer
         {
             foreach (FsmState t in fsm.FsmStates)
             {
+                if (t.Name != stateName) continue;
                 FsmStateAction action = fsm.GetAction(stateName, index);
                 t.Actions = t.Actions.Where(x => x != action).ToArray();
             }
@@ -107,10 +108,10 @@ namespace Lightbringer
         public static void ReplaceTransition(this PlayMakerFSM fsm, string stateName, string eventName, string toState)
         {
             FsmState targetState = fsm.GetState(toState);
-            foreach (FsmState t in fsm.FsmStates)
+            foreach (FsmState state in fsm.FsmStates)
             {
-                if (t.Name != stateName) continue;
-                foreach (FsmTransition trans in t.Transitions)
+                if (state.Name != stateName) continue;
+                foreach (FsmTransition trans in state.Transitions)
                 {
                     if (trans.EventName == eventName)
                     {
@@ -149,16 +150,16 @@ namespace Lightbringer
 
     public class FsmAction : FsmStateAction
     {
-        private readonly Action _action;
+        private readonly Action action;
 
         public FsmAction(Action a)
         {
-            _action = a;
+            action = a;
         }
 
         public override void OnEnter()
         {
-            _action?.Invoke();
+            action?.Invoke();
             Finish();
         }
     }
