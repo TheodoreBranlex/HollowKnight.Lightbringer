@@ -15,6 +15,8 @@ namespace Lightbringer {
                 "What is this? Why does it exist? Is it safe to use?\n\nSlashing upwards speeds up the flow of time. Taking damage will break the effect.",
             ["CHARM_DESC_15"] =
                 "A small trinket made of valuable metal and precious stone.\n\nLanding five successful nail attacks on an enemy will restore health.",
+            ["CHARM_DESC_16"] =
+                "Contains a radiant spell that transforms swift glitters into deadly weapons.\n\nWhen using Light Dash, the bearer's body will sharpen and damage enemies.",
             ["CHARM_DESC_17"] =
                 "Radiates an intense flash of light when exposed to SOUL.\n\nWhen focusing SOUL, emit a blast of light that damages enemies. Increases SOUL regeneration rate slightly.",
             ["CHARM_DESC_18"] = "A metal badge that is cold to the touch. It brings back warm memories.\n\nFire lances in both directions when attacking.",
@@ -98,6 +100,7 @@ namespace Lightbringer {
             ["CHARM_NAME_13"] = "Burning Pride",
             ["CHARM_NAME_14"] = "Time Fracture",
             ["CHARM_NAME_15"] = "Bloodlust",
+            ["CHARM_NAME_16"] = "Sharp Light",
             ["CHARM_NAME_17"] = "Light Blast",
             ["CHARM_NAME_18"] = "Silent Divide",
             ["CHARM_NAME_19"] = "Eye of the Storm",

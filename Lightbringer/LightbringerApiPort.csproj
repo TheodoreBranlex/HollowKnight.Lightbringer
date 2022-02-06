@@ -71,6 +71,7 @@
         <EmbeddedResource Include="Resources\Charms\13.png" />
         <EmbeddedResource Include="Resources\Charms\14.png" />
         <EmbeddedResource Include="Resources\Charms\15.png" />
+        <EmbeddedResource Include="Resources\Charms\16.png" />
 		<EmbeddedResource Include="Resources\Charms\17.png" />
         <EmbeddedResource Include="Resources\Charms\18.png" />
         <EmbeddedResource Include="Resources\Charms\19.png" />

@@ -325,7 +325,7 @@ namespace Lightbringer
                    Sprites.Count < 22)
                 yield return null;
 
-            foreach (int i in new int[] { 2, 3, 4, 6, 8, 11, 13, 14, 15, 17, 18, 19, 20, 21, 25, 26, 35 }) CharmIconList.Instance.spriteList[i] = Sprites["Charms." + i];
+            foreach (int i in new int[] { 2, 3, 4, 6, 8, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 25, 26, 35 }) CharmIconList.Instance.spriteList[i] = Sprites["Charms." + i];
 
             HeroController.instance.geoCounter.geoSprite.GetComponent<tk2dSprite>()
                           .GetCurrentSpriteDef()
