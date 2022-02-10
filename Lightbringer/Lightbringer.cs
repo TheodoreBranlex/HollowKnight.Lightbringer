@@ -446,38 +446,18 @@ namespace Lightbringer
             spellctrl.ReplaceTransition("Focus", "FOCUS COMPLETED", "Set HP Amount");
 
             spellctrl.ReplaceAction("Scream Burst 2", 8, () => {
-                var beamctrl = BeamSweeper.LocateMyFSM("Control");
-                beamctrl.SetState("Beam Sweep R 2");
+                BeamSweeper.LocateMyFSM("Control").SetState("Beam Sweep R 2");
             });
             spellctrl.RemoveAction("Scream Burst 2", 3);
             spellctrl.RemoveAction("Scream Burst 2", 1);
             spellctrl.RemoveAction("Scream Burst 2", 0);
 
-            spellctrl.ReplaceAction("Fireball 1", 3, () => {
-                HeroController.instance.StartCoroutine(SpawnFireball());
-            });
+            spellctrl.ReplaceAction("Fireball 1", 3, SpawnFireball);
 
-            spellctrl.ReplaceAction("Fireball 2", 3, () => {
-                HeroController.instance.StartCoroutine(SpawnOrb());
-            });
+            spellctrl.ReplaceAction("Fireball 2", 3, SpawnOrb);
             spellctrl.ReplaceTransition("Fireball 2", "FINISHED", "Spell End");
 
-            spellctrl.AddAction("Q2 Land", () => {
-                int n = 10;
-                float spacing = 0.8f;
-                int dmgAmount = 5;
-                Vector3 scale = new Vector3(1.0f, 0.7f, 0.9f);
-                Vector3 pos = HeroController.instance.transform.position;
-                if (PlayerData.instance.equippedCharm_19)
-                {
-                    n += 5;
-                    dmgAmount += 5;
-                }
-                SpikePre.transform.localScale = scale;
-                SpikePre.GetComponent<DamageEnemies>().damageDealt = dmgAmount;
-                SpikeCenter.transform.position = pos;
-                SpawnSpike(n, spacing);
-            });
+            spellctrl.AddAction("Q2 Land", SpawnSpike);
 
             spellctrl.Fsm.SaveActions();
         }
@@ -495,7 +475,6 @@ namespace Lightbringer
         {
             var orb = orbPre;
             orb.layer = 17;   // PhysLayers.HERO_ATTACK
-            AddDamageEnemy(orb, 30);
 
             var orbcontrol = orb.LocateMyFSM("Orb Control");
 
@@ -509,6 +488,8 @@ namespace Lightbringer
 
             orbcontrol.RemoveState("Orbiting");
             orbcontrol.RemoveState("Chase Hero");
+
+            orbcontrol.RemoveAction("Init", 2); // SetScale
 
             orbcontrol.AddAction("Chase Enemy", new Trigger2dEventLayer
             {
@@ -553,7 +534,7 @@ namespace Lightbringer
             blast.layer = (int)PhysLayers.HERO_ATTACK;
             damager.gameObject.layer = (int)PhysLayers.HERO_ATTACK;
 
-            AddDamageEnemy(damager.gameObject).circleDirection = true;
+            SetDamageEnemy(damager.gameObject, 20).circleDirection = true;
 
             blastAction.gameObject.GameObject.Value = blast;
             fsm.Fsm.SaveActions();
@@ -590,18 +571,23 @@ namespace Lightbringer
             Object.DontDestroyOnLoad(beamPre);
             beamPre.SetActive(false);
             Object.DestroyImmediate(beamPre.GetComponent<DamageHero>());
-            AddDamageEnemy(beamPre).direction = 90;
             spawnbeam.gameObject.Value = beamPre;
             BeamSweeper.layer = (int)PhysLayers.HERO_ATTACK;
             beamPre.layer = (int)PhysLayers.HERO_ATTACK;
-            var myspawnbeam = new MySpawnObjectFromGlobalPoolOverTime
+            var myspawnbeam = new SpawnObject
             {
                 gameObject = spawnbeam.gameObject,
                 spawnPoint = spawnbeam.spawnPoint,
                 position = new Vector3(0, 0, 0),
                 rotation = new Vector3(0, 0, 0),
-                frequency = 0.075f
+                frequency = 0.075f,
+                initialize = (GameObject beam) =>
+                {
+                    var damage = SetDamageEnemy(beam, PlayerData.instance.equippedCharm_19 ? 12 : 8);
+                    damage.direction = 90;
+                }
             };
+
             beamctrl.ReplaceAction("Beam Sweep R 2", 4, () => {
                 if (HeroController.instance != null)
                 {
@@ -624,21 +610,18 @@ namespace Lightbringer
         {
             Object.DestroyImmediate(SpikePre.LocateMyFSM("Hero Saver"));
             Object.DestroyImmediate(SpikePre.GetComponent<DamageHero>());
-            AddDamageEnemy(SpikePre).damageDealt = 5;
 
             var spikectrl = SpikePre.LocateMyFSM("Control");
             spikectrl.RemoveTransition("Up", "DOWN");
             spikectrl.RemoveTransition("Up", "SPIKES DOWN");
-            spikectrl.AddAction("Up", new Wait { time = 0.4f, finishEvent = FsmEvent.Finished });
-            var downed = spikectrl.GetState("Downed");
-            var floor_antic = spikectrl.GetState("Floor Antic");
-            var spike_up = spikectrl.GetState("Spike Up");
-            var up = spikectrl.GetState("Up");
 
-            downed.Transitions = new FsmTransition[] { };
-            floor_antic.Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Spike Up" } };
-            spike_up.Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Up" } };
-            up.Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Down" } };
+            spikectrl.GetAction<Wait>("Floor Antic", 2).time = 0.4f;
+            spikectrl.AddAction("Up", new Wait { time = 0.8f, finishEvent = FsmEvent.Finished });
+
+            spikectrl.GetState("Downed").Transitions = new FsmTransition[] { };
+            spikectrl.GetState("Floor Antic").Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Spike Up" } };
+            spikectrl.GetState("Spike Up").Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Up" } };
+            spikectrl.GetState("Up").Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Down" } };
             spikectrl.AddTransition("Downed", "HEROSPIKEUP", "Floor Antic");
 
             spikectrl.Fsm.SaveActions();
@@ -691,6 +674,9 @@ namespace Lightbringer
 
                 var orb = orbPre.Spawn();
                 orb.transform.position = spawnPoint;
+                float size = PlayerData.instance.equippedCharm_19 ? 1.7f : 1.3f;
+                orb.transform.localScale = new Vector3(size, size, 1);
+                SetDamageEnemy(orb, PlayerData.instance.equippedCharm_19 ? 25 : 15);
                 orb.AddComponent<OrbChaseObject>();
                 orb.SetActive(true);
 
@@ -702,9 +688,27 @@ namespace Lightbringer
                 yield return new WaitForSeconds(0.3f);
             }
         }
-        private void SpawnSpike(int n = 10, float spacing = 0.8f)
+        private void SpawnSpike()
         {
-            AddSpikeToPool(n, spacing);
+            int number = 10;
+            float spacing = 0.8f;
+            int damage = 5;
+            Vector3 scale = new Vector3(1.0f, 0.7f, 0.9f);
+            Vector3 pos = HeroController.instance.transform.position + 0.1f * Vector3.up;
+            if (PlayerData.instance.equippedCharm_19)
+            {
+                number += 3;
+                damage += 5;
+                scale.y *= 1.5f;
+                scale.x *= 1.2f;
+                spacing *= 1.2f;
+                pos.y += 0.6f;
+            }
+            SpikePre.transform.localScale = scale;
+            SetDamageEnemy(SpikePre, damage);
+            SpikeCenter.transform.position = pos;
+
+            AddSpikeToPool(number, spacing);
             foreach (var s in spikes)
                 s.LocateMyFSM("Control").SendEvent("HEROSPIKEUP");
         }
@@ -772,9 +776,9 @@ namespace Lightbringer
                 orig(self, amount);
         }
 
-        public DamageEnemies AddDamageEnemy(GameObject go, int damage = 20)
+        public DamageEnemies SetDamageEnemy(GameObject go, int damage = 0)
         {
-            var dmg = go.AddComponent<DamageEnemies>();
+            var dmg = go.GetComponent<DamageEnemies>() ?? go.AddComponent<DamageEnemies>();
             dmg.attackType = AttackTypes.Spell;
             dmg.circleDirection = false;
             dmg.damageDealt = damage;

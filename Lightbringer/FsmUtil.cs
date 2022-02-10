@@ -63,6 +63,11 @@ namespace Lightbringer
             AddAction(fsm, stateName, new FsmAction(action));
         }
 
+        public static void AddAction(this PlayMakerFSM fsm, string stateName, Func<IEnumerator> coroutine)
+        {
+            AddAction(fsm, stateName, () => { fsm.Fsm.Owner.StartCoroutine(coroutine()); });
+        }
+
         public static void ReplaceAction(this PlayMakerFSM fsm, string stateName, int index, FsmStateAction action)
         {
             foreach (FsmState t in fsm.FsmStates)
@@ -75,6 +80,11 @@ namespace Lightbringer
         public static void ReplaceAction(this PlayMakerFSM fsm, string stateName, int index, Action action)
         {
             ReplaceAction(fsm, stateName, index, new FsmAction(action));
+        }
+
+        public static void ReplaceAction(this PlayMakerFSM fsm, string stateName, int index, Func<IEnumerator> coroutine)
+        {
+            ReplaceAction(fsm, stateName, index, () => { fsm.Fsm.Owner.StartCoroutine(coroutine()); });
         }
 
         public static void RemoveAction(this PlayMakerFSM fsm, string stateName, int index)
