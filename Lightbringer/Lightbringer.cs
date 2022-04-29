@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using GlobalEnums;
@@ -51,15 +50,15 @@ namespace Lightbringer
 
         public static SpriteFlash _SpriteFlash;
 
-        GameObject orbPre;
-        GameObject[] orbs = { null, null };
+        GameObject OrbPrefab;
+        GameObject[] Orbs = { null, null };
         GameObject ShotCharge;
         GameObject ShotCharge2;
         GameObject BeamSweeper;
         GameObject HKBlast;
-        GameObject SpikePre;
+        GameObject SpikePrefab;
         GameObject SpikeCenter;
-        List<GameObject> spikes = new List<GameObject>();
+        List<GameObject> Spikes = new List<GameObject>();
 
         public LightbringerSettings Settings = new LightbringerSettings();
         public void OnLoadGlobal(LightbringerSettings s) => Settings = s;
@@ -183,7 +182,6 @@ namespace Lightbringer
             _asm = Assembly.GetExecutingAssembly();
             Sprites = new Dictionary<string, Sprite>();
 
-            Stopwatch overall = Stopwatch.StartNew();
             foreach (string res in _asm.GetManifestResourceNames())
             {
                 if (!res.EndsWith(".png") && !res.EndsWith(".tex"))
@@ -213,7 +211,7 @@ namespace Lightbringer
                 }
             }
 
-            Log("Finished loading all images in " + overall.ElapsedMilliseconds + "ms");
+            Log("Finished loading images");
         }
 
         public void Unload()
@@ -248,24 +246,24 @@ namespace Lightbringer
 
         private void GetPrefabs(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
-            var abs = preloadedObjects["GG_Radiance"]["Boss Control/Absolute Radiance"];
-            var fsm = abs.LocateMyFSM("Attack Commands");
+            var radiance = preloadedObjects["GG_Radiance"]["Boss Control/Absolute Radiance"];
+            var fsm = radiance.LocateMyFSM("Attack Commands");
             var spawnAction = fsm.GetAction<SpawnObjectFromGlobalPool>("Spawn Fireball", 1);
-            orbPre = Object.Instantiate(spawnAction.gameObject.Value, null);
-            Object.DontDestroyOnLoad(orbPre);
-            orbPre.SetActive(false);
-            ShotCharge = abs.transform.Find("Shot Charge").gameObject;
-            ShotCharge2 = abs.transform.Find("Shot Charge 2").gameObject;
-            var finalcontrol = orbPre.LocateMyFSM("Final Control");
+            OrbPrefab = Object.Instantiate(spawnAction.gameObject.Value, null);
+            Object.DontDestroyOnLoad(OrbPrefab);
+            OrbPrefab.SetActive(false);
+            ShotCharge = radiance.transform.Find("Shot Charge").gameObject;
+            ShotCharge2 = radiance.transform.Find("Shot Charge 2").gameObject;
+            var finalcontrol = OrbPrefab.LocateMyFSM("Final Control");
             Object.DestroyImmediate(finalcontrol);
-            var herohurter = orbPre.transform.Find("Hero Hurter").GetComponent<DamageHero>();
+            var herohurter = OrbPrefab.transform.Find("Hero Hurter").GetComponent<DamageHero>();
             Object.DestroyImmediate(herohurter);
             BeamSweeper = preloadedObjects["GG_Radiance"]["Boss Control/Beam Sweeper"];
             BeamSweeper.transform.SetParent(null);
 
             HKBlast = preloadedObjects["GG_Hollow_Knight"]["Battle Scene/Focus Blasts/HK Prime Blast"];
 
-            SpikePre = preloadedObjects["GG_Radiance"]["Boss Control/Spike Control/Far L/Radiant Spike"];
+            SpikePrefab = preloadedObjects["GG_Radiance"]["Boss Control/Spike Control/Far L/Radiant Spike"];
         }
 
         // It should take more hits to stun bosses 
@@ -313,7 +311,7 @@ namespace Lightbringer
         {
             SaveGameSave();
             GameManager.instance.StartCoroutine(ChangeSprites());
-            GameManager.instance.StartCoroutine(WaitHero(() => SetupTrigger()));
+            GameManager.instance.StartCoroutine(WaitHero(() => SetupActions()));
         }
 
         private IEnumerator ChangeSprites()
@@ -433,7 +431,7 @@ namespace Lightbringer
             return amount;
         }
 
-        private void SetupTrigger()
+        private void SetupActions()
         {
             var spellctrl = HeroController.instance.spellControl;
             spellctrl.AddAction("Focus", () => {
@@ -473,7 +471,7 @@ namespace Lightbringer
         }
         private void SetupOrb()
         {
-            var orb = orbPre;
+            var orb = OrbPrefab;
             orb.layer = 17;   // PhysLayers.HERO_ATTACK
 
             var orbcontrol = orb.LocateMyFSM("Orb Control");
@@ -563,21 +561,20 @@ namespace Lightbringer
         }
         private void SetupBeam()
         {
-            var beamctrl = BeamSweeper.LocateMyFSM("Control");
+            var BeamControl = BeamSweeper.LocateMyFSM("Control");
 
-            var spawnbeam = beamctrl.GetAction<SpawnObjectFromGlobalPoolOverTime>("Beam Sweep R 2", 5);
-            var _beampre = spawnbeam.gameObject.Value;
-            var beamPre = Object.Instantiate(_beampre);
-            Object.DontDestroyOnLoad(beamPre);
-            beamPre.SetActive(false);
-            Object.DestroyImmediate(beamPre.GetComponent<DamageHero>());
-            spawnbeam.gameObject.Value = beamPre;
+            var SpawnBeam = BeamControl.GetAction<SpawnObjectFromGlobalPoolOverTime>("Beam Sweep R 2", 5);
+            var BeamPrefab = Object.Instantiate(SpawnBeam.gameObject.Value);
+            Object.DontDestroyOnLoad(BeamPrefab);
+            BeamPrefab.SetActive(false);
+            Object.DestroyImmediate(BeamPrefab.GetComponent<DamageHero>());
+            SpawnBeam.gameObject.Value = BeamPrefab;
             BeamSweeper.layer = (int)PhysLayers.HERO_ATTACK;
-            beamPre.layer = (int)PhysLayers.HERO_ATTACK;
-            var myspawnbeam = new SpawnObject
+            BeamPrefab.layer = (int)PhysLayers.HERO_ATTACK;
+            var MySpawnBeam = new SpawnObjects
             {
-                gameObject = spawnbeam.gameObject,
-                spawnPoint = spawnbeam.spawnPoint,
+                gameObject = SpawnBeam.gameObject,
+                spawnPoint = SpawnBeam.spawnPoint,
                 position = new Vector3(0, 0, 0),
                 rotation = new Vector3(0, 0, 0),
                 frequency = 0.075f,
@@ -588,44 +585,45 @@ namespace Lightbringer
                 }
             };
 
-            beamctrl.ReplaceAction("Beam Sweep R 2", 4, () => {
+            BeamControl.ReplaceAction("Beam Sweep R 2", 4, () => {
                 if (HeroController.instance != null)
                 {
-                    Vector3 heropos = HeroController.instance.transform.position;
-                    heropos.y -= 10;
-                    heropos.x -= 30;
-                    BeamSweeper.transform.position = heropos;
+                    Vector3 position = HeroController.instance.transform.position;
+                    position.y -= 10;
+                    position.x -= 30;
+                    BeamSweeper.transform.position = position;
                 }
             });
-            beamctrl.ReplaceAction("Beam Sweep R 2", 5, myspawnbeam);
+            BeamControl.ReplaceAction("Beam Sweep R 2", 5, MySpawnBeam);
 
-            beamctrl.GetAction<iTweenMoveBy>("Beam Sweep R 2", 6).vector = new Vector3(0, 50, 0);
+            BeamControl.GetAction<iTweenMoveBy>("Beam Sweep R 2", 6).vector = new Vector3(0, 50, 0);
 
-            var idle = beamctrl.GetState("Idle");
+            var idle = BeamControl.GetState("Idle");
             idle.Transitions = new FsmTransition[] { };
-            beamctrl.Fsm.SaveActions();
+            BeamControl.Fsm.SaveActions();
             BeamSweeper.SetActive(true);
         }
         private void SetupSpike()
         {
-            Object.DestroyImmediate(SpikePre.LocateMyFSM("Hero Saver"));
-            Object.DestroyImmediate(SpikePre.GetComponent<DamageHero>());
+            Object.DestroyImmediate(SpikePrefab.LocateMyFSM("Hero Saver"));
+            Object.DestroyImmediate(SpikePrefab.GetComponent<DamageHero>());
 
-            var spikectrl = SpikePre.LocateMyFSM("Control");
-            spikectrl.RemoveTransition("Up", "DOWN");
-            spikectrl.RemoveTransition("Up", "SPIKES DOWN");
+            var SpikeControl = SpikePrefab.LocateMyFSM("Control");
+            SpikeControl.RemoveTransition("Up", "DOWN");
+            SpikeControl.RemoveTransition("Up", "SPIKES DOWN");
 
-            spikectrl.GetAction<Wait>("Floor Antic", 2).time = 0.4f;
-            spikectrl.AddAction("Up", new Wait { time = 0.8f, finishEvent = FsmEvent.Finished });
+            SpikeControl.GetAction<Wait>("Floor Antic", 2).time = 0.4f;
+            SpikeControl.AddAction("Up", new Wait { time = 0.8f, finishEvent = FsmEvent.Finished });
 
-            spikectrl.GetState("Downed").Transitions = new FsmTransition[] { };
-            spikectrl.GetState("Floor Antic").Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Spike Up" } };
-            spikectrl.GetState("Spike Up").Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Up" } };
-            spikectrl.GetState("Up").Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Down" } };
-            spikectrl.AddTransition("Downed", "HEROSPIKEUP", "Floor Antic");
+            SpikeControl.GetState("Downed").Transitions = new FsmTransition[] { };
+            SpikeControl.GetState("Floor Antic").Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Spike Up" } };
+            SpikeControl.GetState("Spike Up").Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Up" } };
+            SpikeControl.GetState("Up").Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Down" } };
+            SpikeControl.AddTransition("Downed", "HEROSPIKEUP", "Floor Antic");
 
-            spikectrl.Fsm.SaveActions();
-            SpikeCenter = new GameObject { name = "HeroSpikeCenter", layer = 23, active = true };
+            SpikeControl.Fsm.SaveActions();
+            SpikeCenter = new GameObject { name = "HeroSpikeCenter", layer = 23 };
+            SpikeCenter.SetActive(true);
             Object.DontDestroyOnLoad(SpikeCenter);
             SpikeCenter.transform.position = HeroController.instance.transform.position;
         }
@@ -655,78 +653,78 @@ namespace Lightbringer
         {
             for (int i = 0; i < (PlayerData.instance.equippedCharm_11 ? 2 : 1); i++)
             {
-                var spawnPoint = new Vector3(HeroController.instance.transform.position.x + UnityEngine.Random.Range(-2, 2), HeroController.instance.transform.position.y + 2 + UnityEngine.Random.Range(-3, 2));
+                var position = new Vector3(HeroController.instance.transform.position.x + UnityEngine.Random.Range(-2, 2), HeroController.instance.transform.position.y + 2 + UnityEngine.Random.Range(-3, 2));
                 var ShotCharge = Object.Instantiate(this.ShotCharge);
                 var ShotCharge2 = Object.Instantiate(this.ShotCharge2);
-                ShotCharge.transform.position = spawnPoint;
-                ShotCharge2.transform.position = spawnPoint;
+                ShotCharge.transform.position = position;
+                ShotCharge2.transform.position = position;
                 ShotCharge.SetActive(true);
                 ShotCharge2.SetActive(true);
-                var em = ShotCharge.GetComponent<ParticleSystem>().emission;
-                var em2 = ShotCharge2.GetComponent<ParticleSystem>().emission;
-                em.enabled = true;
-                em2.enabled = true;
+                var Emitter = ShotCharge.GetComponent<ParticleSystem>().emission;
+                var Emitter2 = ShotCharge2.GetComponent<ParticleSystem>().emission;
+                Emitter.enabled = true;
+                Emitter2.enabled = true;
 
                 yield return new WaitForSeconds(0.2f);
 
-                if (orbs[i]?.transform?.parent?.name != "GlobalPool")
-                    Object.Destroy(orbs[i]);
+                if (Orbs[i]?.transform?.parent?.name != "GlobalPool")
+                    Object.Destroy(Orbs[i]);
 
-                var orb = orbPre.Spawn();
-                orb.transform.position = spawnPoint;
+                var Orb = OrbPrefab.Spawn();
+                Orb.transform.position = position;
                 float size = PlayerData.instance.equippedCharm_19 ? 1.7f : 1.3f;
-                orb.transform.localScale = new Vector3(size, size, 1);
-                SetDamageEnemy(orb, PlayerData.instance.equippedCharm_19 ? 25 : 15);
-                orb.AddComponent<OrbChaseObject>();
-                orb.SetActive(true);
+                Orb.transform.localScale = new Vector3(size, size, 1);
+                SetDamageEnemy(Orb, PlayerData.instance.equippedCharm_19 ? 25 : 15);
+                Orb.AddComponent<OrbChaseObject>();
+                Orb.SetActive(true);
 
-                orbs[i] = orb;
+                Orbs[i] = Orb;
 
-                em.enabled = false;
-                em2.enabled = false;
+                Emitter.enabled = false;
+                Emitter2.enabled = false;
 
                 yield return new WaitForSeconds(0.3f);
             }
         }
         private void SpawnSpike()
         {
-            int number = 10;
+            int count = 10;
             float spacing = 0.8f;
             int damage = 5;
             Vector3 scale = new Vector3(1.0f, 0.7f, 0.9f);
-            Vector3 pos = HeroController.instance.transform.position + 0.1f * Vector3.up;
+            Vector3 position = HeroController.instance.transform.position + 0.1f * Vector3.up;
             if (PlayerData.instance.equippedCharm_19)
             {
-                number += 3;
+                count += 3;
                 damage += 5;
                 scale.y *= 1.5f;
                 scale.x *= 1.2f;
                 spacing *= 1.2f;
-                pos.y += 0.6f;
+                position.y += 0.6f;
             }
-            SpikePre.transform.localScale = scale;
-            SetDamageEnemy(SpikePre, damage);
-            SpikeCenter.transform.position = pos;
+            SpikePrefab.transform.localScale = scale;
+            SetDamageEnemy(SpikePrefab, damage);
+            SpikeCenter.transform.position = position;
 
-            AddSpikeToPool(number, spacing);
-            foreach (var s in spikes)
-                s.LocateMyFSM("Control").SendEvent("HEROSPIKEUP");
+            AddSpikeToPool(count, spacing);
+            foreach (var Spike in Spikes)
+                Spike.LocateMyFSM("Control").SendEvent("HEROSPIKEUP");
         }
         private bool AddSpikeToPool(int n = 10, float spacing = 0.8f)
         {
-            foreach (var s in spikes)
-                Object.Destroy(s);
-            spikes.Clear();
+            foreach (var Spike in Spikes)
+                Object.Destroy(Spike);
+            Spikes.Clear();
 
             float x = -1 * (n * spacing / 2);
             for (int i = 0; i < n; i++)
             {
-                GameObject s = Object.Instantiate(SpikePre);
-                s.transform.SetParent(SpikeCenter.transform);
-                s.transform.localPosition = new Vector3(x, -0.4f, 0);
+                GameObject Spike = Object.Instantiate(SpikePrefab);
+                Spike.transform.SetParent(SpikeCenter.transform);
+                Spike.transform.localPosition = new Vector3(x, -0.4f, 0);
                 x += spacing;
-                spikes.Add(s);
-                s.SetActive(true);
+                Spikes.Add(Spike);
+                Spike.SetActive(true);
             }
             return true;
         }

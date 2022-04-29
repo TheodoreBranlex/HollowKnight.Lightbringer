@@ -4,20 +4,14 @@ using UnityEngine;
 
 namespace Lightbringer
 {
-    public class SpawnObject : FsmStateAction
+    public class SpawnObjects : FsmStateAction
     {
         public override void Reset()
         {
             gameObject = null;
             spawnPoint = null;
-            position = new FsmVector3
-            {
-                UseVariable = true
-            };
-            rotation = new FsmVector3
-            {
-                UseVariable = true
-            };
+            position = new FsmVector3 { UseVariable = true };
+            rotation = new FsmVector3 { UseVariable = true };
             frequency = null;
         }
         public override void OnUpdate()
