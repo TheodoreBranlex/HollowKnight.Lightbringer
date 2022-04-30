@@ -50,18 +50,20 @@ namespace Lightbringer
 
         public static SpriteFlash _SpriteFlash;
 
+        Coroutine EnableSpells;
+
         GameObject OrbPrefab;
         GameObject[] Orbs = { null, null };
         GameObject ShotCharge;
         GameObject ShotCharge2;
         GameObject BeamSweeper;
-        GameObject HKBlast;
+        GameObject BlastPrefab;
         GameObject SpikePrefab;
         GameObject SpikeCenter;
         List<GameObject> Spikes = new List<GameObject>();
 
         public LightbringerSettings Settings = new LightbringerSettings();
-        public void OnLoadGlobal(LightbringerSettings s) => Settings = s;
+        public void OnLoadGlobal(LightbringerSettings settings) => Settings = settings;
         public LightbringerSettings OnSaveGlobal() => Settings;
 
         public override string GetVersion() => Assembly.GetExecutingAssembly().GetName().Version.ToString();
@@ -69,116 +71,52 @@ namespace Lightbringer
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
             Instance = this;
-            GetPrefabs(preloadedObjects);
-            SetupSpells();
+
+            if (preloadedObjects != null) // Else prefabs where already loaded
+                GetPrefabs(preloadedObjects);
+            LoadSprites();
+
+            GameManager.instance.StartCoroutine(WaitHero(() => { SetupOrb(); SetupBeam(); SetupBlast(); SetupSpike(); }));
+            if (HeroController.instance) // If enabled during gameplay
+                EnableSpells = GameManager.instance.StartCoroutine(WaitHero(SetupActions));
+
+            if (PlayerData.instance != null)
+                SaveGameSave();
+
             RegisterCallbacks();
         }
 
-        private void Attack(On.HeroController.orig_Attack orig, HeroController self, AttackDirection attackdir)
+        private IEnumerator WaitHero(Action a)
         {
-            new AttackHandler(_timefracture).Attack(self, attackdir);
+            yield return new WaitWhile(() => HeroController.instance == null);
+            yield return new WaitForSeconds(0.3f);
+            a?.Invoke();
         }
 
-        private void CreateCanvas()
+        private void GetPrefabs(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
-            if (_canvas != null) return;
+            var radiance = preloadedObjects["GG_Radiance"]["Boss Control/Absolute Radiance"];
+            var fsm = radiance.LocateMyFSM("Attack Commands");
+            var spawnAction = fsm.GetAction<SpawnObjectFromGlobalPool>("Spawn Fireball", 1);
+            OrbPrefab = Object.Instantiate(spawnAction.gameObject.Value, null);
+            Object.DontDestroyOnLoad(OrbPrefab);
+            OrbPrefab.SetActive(false);
+            ShotCharge = radiance.transform.Find("Shot Charge").gameObject;
+            ShotCharge2 = radiance.transform.Find("Shot Charge 2").gameObject;
+            var finalcontrol = OrbPrefab.LocateMyFSM("Final Control");
+            Object.DestroyImmediate(finalcontrol);
+            var herohurter = OrbPrefab.transform.Find("Hero Hurter").GetComponent<DamageHero>();
+            Object.DestroyImmediate(herohurter);
+            BeamSweeper = preloadedObjects["GG_Radiance"]["Boss Control/Beam Sweeper"];
+            BeamSweeper.transform.SetParent(null);
 
-            _canvas = CanvasUtil.CreateCanvas(RenderMode.ScreenSpaceOverlay, new Vector2(1920, 1080));
-            Object.DontDestroyOnLoad(_canvas);
+            BlastPrefab = preloadedObjects["GG_Hollow_Knight"]["Battle Scene/Focus Blasts/HK Prime Blast"];
 
-            GameObject gameObject = CanvasUtil.CreateTextPanel
-            (
-                _canvas,
-                "",
-                27,
-                TextAnchor.MiddleCenter,
-                new CanvasUtil.RectData
-                (
-                    new Vector2(0, 50),
-                    new Vector2(0, 45),
-                    new Vector2(0, 0),
-                    new Vector2(1, 0),
-                    new Vector2(0.5f, 0.5f)
-                )
-            );
-
-            _textObj = gameObject.GetComponent<Text>();
-            _textObj.font = CanvasUtil.TrajanBold;
-            _textObj.text = "";
-            _textObj.fontSize = 42;
+            SpikePrefab = preloadedObjects["GG_Radiance"]["Boss Control/Spike Control/Far L/Radiant Spike"];
         }
 
-        private void RegisterCallbacks()
+        private void LoadSprites()
         {
-            // Tiny Shell fixes
-            On.HeroController.FaceLeft += TinyShell.FaceLeft;
-            On.HeroController.FaceRight += TinyShell.FaceRight;
-
-            // Stun Resistance
-            IntCompare.DoIntCompare += DoIntCompare;
-
-            // Sprites!
-            On.ShopItemStats.Awake += Awake;
-
-            // Lance Spawn 
-            On.HeroController.Attack += Attack;
-
-            // Faulty Wallet
-            On.PlayerData.AddGeo += AddGeo;
-
-            // Burning Blade, Fury
-            On.NailSlash.StartSlash += StartSlash;
-
-            // Ascending Light won't give 2 hearts
-            On.PlayerData.UpdateBlueHealth += UpdateBlueHealth;
-
-            // Fix Recoil with Steady Blow
-            On.HeroController.RecoilLeft += RecoilLeft;
-            On.HeroController.RecoilRight += RecoilRight;
-
-            // Charm Values 
-            // Restore Nail Damage 
-            // SPRITES!
-            ModHooks.BeforeSavegameSaveHook += BeforeSaveGameSave;
-            ModHooks.AfterSavegameLoadHook += AfterSaveGameLoad;
-            ModHooks.SavegameSaveHook += SaveGameSave;
-
-            // Notches/HP
-            ModHooks.NewGameHook += OnNewGame;
-
-            // Panic Compass
-            ModHooks.BeforeAddHealthHook += Health;
-            ModHooks.TakeHealthHook += Health;
-
-            // Don't hit walls w/ lances
-            ModHooks.DoAttackHook += DoAttack;
-            ModHooks.AfterAttackHook += AfterAttack;
-
-            // Glass Soul
-            ModHooks.TakeHealthHook += TakeHealth;
-
-            // Disable Soul Gain 
-            // Bloodlust
-            ModHooks.SoulGainHook += SoulGain;
-
-            // Soul Gen
-            // Nailmaster's Passion
-            // Add Muzznik & DoubleKin Behaviours
-            ModHooks.HeroUpdateHook += Update;
-
-            // Beam Damage 
-            // Timescale 
-            // Panic Compass 
-            // Tiny Shell
-            ModHooks.CharmUpdateHook += CharmUpdate;
-
-            // Custom Text
-            ModHooks.LanguageGetHook += LangGet;
-
-            // Lance Textures 
-            // Canvas for Muzznik Text Soul Orb FSM
-            USceneManager.sceneLoaded += SceneLoadedHook;
-
             _asm = Assembly.GetExecutingAssembly();
             Sprites = new Dictionary<string, Sprite>();
 
@@ -210,8 +148,35 @@ namespace Lightbringer
                     Log("Created sprite from embedded image: " + res);
                 }
             }
-
             Log("Finished loading images");
+        }
+
+        private void RegisterCallbacks()
+        {
+            On.HeroController.FaceLeft += TinyShell.FaceLeft;
+            On.HeroController.FaceRight += TinyShell.FaceRight;
+            IntCompare.DoIntCompare += DoIntCompare;
+            On.ShopItemStats.Awake += Awake;
+            On.HeroController.Attack += Attack;
+            On.PlayerData.AddGeo += AddGeo;
+            On.NailSlash.StartSlash += StartSlash;
+            On.PlayerData.UpdateBlueHealth += UpdateBlueHealth;
+            On.HeroController.RecoilLeft += RecoilLeft;
+            On.HeroController.RecoilRight += RecoilRight;
+            ModHooks.BeforeSavegameSaveHook += BeforeSaveGameSave;
+            ModHooks.AfterSavegameLoadHook += AfterSaveGameLoad;
+            ModHooks.SavegameSaveHook += SaveGameSave;
+            ModHooks.NewGameHook += OnNewGame;
+            ModHooks.BeforeAddHealthHook += Health;
+            ModHooks.TakeHealthHook += Health;
+            ModHooks.DoAttackHook += DoAttack;
+            ModHooks.AfterAttackHook += AfterAttack;
+            ModHooks.TakeHealthHook += TakeHealth;
+            ModHooks.SoulGainHook += SoulGain;
+            ModHooks.HeroUpdateHook += Update;
+            ModHooks.CharmUpdateHook += CharmUpdate;
+            ModHooks.LanguageGetHook += LangGet;
+            USceneManager.sceneLoaded += SceneLoadedHook;
         }
 
         public void Unload()
@@ -240,30 +205,208 @@ namespace Lightbringer
             ModHooks.LanguageGetHook -= LangGet;
             USceneManager.sceneLoaded -= SceneLoadedHook;
 
+            if (EnableSpells != null)
+                GameManager.instance.StopCoroutine(EnableSpells);
+
+            if (HeroController.instance)
+                ResetAcitons();
+
             if (PlayerData.instance != null)
                 BeforeSaveGameSave();
         }
 
-        private void GetPrefabs(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
+        private void SetupActions()
         {
-            var radiance = preloadedObjects["GG_Radiance"]["Boss Control/Absolute Radiance"];
-            var fsm = radiance.LocateMyFSM("Attack Commands");
-            var spawnAction = fsm.GetAction<SpawnObjectFromGlobalPool>("Spawn Fireball", 1);
-            OrbPrefab = Object.Instantiate(spawnAction.gameObject.Value, null);
-            Object.DontDestroyOnLoad(OrbPrefab);
-            OrbPrefab.SetActive(false);
-            ShotCharge = radiance.transform.Find("Shot Charge").gameObject;
-            ShotCharge2 = radiance.transform.Find("Shot Charge 2").gameObject;
-            var finalcontrol = OrbPrefab.LocateMyFSM("Final Control");
-            Object.DestroyImmediate(finalcontrol);
-            var herohurter = OrbPrefab.transform.Find("Hero Hurter").GetComponent<DamageHero>();
-            Object.DestroyImmediate(herohurter);
-            BeamSweeper = preloadedObjects["GG_Radiance"]["Boss Control/Beam Sweeper"];
-            BeamSweeper.transform.SetParent(null);
+            var spellControl = HeroController.instance.spellControl;
+            spellControl.AddAction("Focus", () => {
+                if (PlayerData.instance.equippedCharm_17)
+                {
+                    BlastPrefab.transform.position = HeroController.instance.transform.position;
+                    BlastPrefab.LocateMyFSM("Control").SetState("Blast");
+                }
+            });
+            spellControl.ReplaceTransition("Focus", "FOCUS COMPLETED", "Set HP Amount");
 
-            HKBlast = preloadedObjects["GG_Hollow_Knight"]["Battle Scene/Focus Blasts/HK Prime Blast"];
+            spellControl.ReplaceAction("Scream Burst 2", 8, () => {
+                BeamSweeper.LocateMyFSM("Control").SetState("Beam Sweep R 2");
+            });
+            spellControl.RemoveAction("Scream Burst 2", 3);
+            spellControl.RemoveAction("Scream Burst 2", 1);
+            spellControl.RemoveAction("Scream Burst 2", 0);
 
-            SpikePrefab = preloadedObjects["GG_Radiance"]["Boss Control/Spike Control/Far L/Radiant Spike"];
+            spellControl.ReplaceAction("Fireball 1", 3, SpawnFireball);
+
+            spellControl.ReplaceAction("Fireball 2", 3, SpawnOrb);
+            spellControl.ReplaceTransition("Fireball 2", "FINISHED", "Spell End");
+
+            spellControl.AddAction("Q2 Land", SpawnSpike);
+        }
+
+        private void ResetAcitons()
+        {
+            var spellControl = HeroController.instance.spellControl;
+            spellControl.Fsm.Reinitialize();
+            spellControl.ReplaceTransition("Focus", "FOCUS COMPLETED", "Spore Cloud");
+            spellControl.ReplaceTransition("Fireball 2", "FINISHED", "Fireball Recoil");
+        }
+
+        private void SetupOrb()
+        {
+            OrbPrefab.layer = (int)PhysLayers.HERO_ATTACK;
+
+            var OrbControl = OrbPrefab.LocateMyFSM("Orb Control");
+
+            OrbControl.AddState("Chase Enemy");
+
+            OrbControl.ReplaceTransition("Init", "FIRE", "Chase Enemy");
+            OrbControl.ReplaceTransition("Init", "FINISHED", "Chase Enemy");
+
+            OrbControl.AddTransition("Chase Enemy", "ORBHIT", "Impact pause");
+            OrbControl.AddTransition("Chase Enemy", "DISSIPATE", "Dissipate");
+
+            OrbControl.RemoveState("Orbiting");
+            OrbControl.RemoveState("Chase Hero");
+
+            OrbControl.RemoveAction("Init", 2); // SetScale
+
+            OrbControl.AddAction("Chase Enemy", new Trigger2dEventLayer
+            {
+                trigger = PlayMakerUnity2d.Trigger2DType.OnTriggerEnter2D,
+                collideLayer = 11,
+                sendEvent = FsmEvent.GetFsmEvent("ORBHIT"),
+                collideTag = "",
+                storeCollider = new FsmGameObject()
+            });
+            OrbControl.AddAction("Chase Enemy", new Trigger2dEventLayer
+            {
+                trigger = PlayMakerUnity2d.Trigger2DType.OnTriggerStay2D,
+                collideLayer = 11,
+                sendEvent = FsmEvent.GetFsmEvent("ORBHIT"),
+                collideTag = "",
+                storeCollider = new FsmGameObject()
+            });
+            OrbControl.AddAction("Chase Enemy", new Wait
+            {
+                time = 3.5f,
+                finishEvent = FsmEvent.GetFsmEvent("DISSIPATE")
+            });
+
+            OrbControl.GetAction<Wait>("Impact", 7).time = 0.1f;
+            OrbControl.Fsm.SaveActions();
+        }
+
+        private void SetupBlast()
+        {
+            GameObject blast;
+            var fsm = BlastPrefab.LocateMyFSM("Control");
+            var blastAction = fsm.GetAction<ActivateGameObject>("Blast", 0);
+            blast = Object.Instantiate(blastAction.gameObject.GameObject.Value);
+            blast.name = "MyBlast";
+            Object.DontDestroyOnLoad(blast);
+            blast.transform.SetParent(BlastPrefab.transform);
+            blast.transform.localPosition = new Vector3(0, 0, 0);
+            blast.SetActive(false);
+            var damager = blast.transform.Find("hero_damager");
+            Object.DestroyImmediate(damager.GetComponent<DamageHero>());
+            BlastPrefab.layer = (int)PhysLayers.HERO_ATTACK;
+            blast.layer = (int)PhysLayers.HERO_ATTACK;
+            damager.gameObject.layer = (int)PhysLayers.HERO_ATTACK;
+
+            SetDamageEnemy(damager.gameObject, 20).circleDirection = true;
+
+            blastAction.gameObject.GameObject.Value = blast;
+            fsm.Fsm.SaveActions();
+
+            var BlastFsm = BlastPrefab.LocateMyFSM("Control");
+            BlastFsm.AddAction("Blast", () => {
+                Vector3 scale = new Vector3(1, 1, 1);
+                MaterialPropertyBlock prop = new MaterialPropertyBlock();
+                if (PlayerData.instance.equippedCharm_34)
+                    scale *= 3;
+
+                BlastPrefab.transform.localScale = scale;
+
+                foreach (Transform t in blast.transform)
+                {
+                    var render = t.GetComponent<SpriteRenderer>();
+                    if (render != null)
+                        render.SetPropertyBlock(prop);
+                }
+
+            });
+            var idle = BlastFsm.GetState("Idle");
+            idle.Transitions = new FsmTransition[] { };
+            BlastFsm.Fsm.SaveActions();
+            BlastPrefab.SetActive(true);
+        }
+
+        private void SetupBeam()
+        {
+            var BeamControl = BeamSweeper.LocateMyFSM("Control");
+
+            var SpawnBeam = BeamControl.GetAction<SpawnObjectFromGlobalPoolOverTime>("Beam Sweep R 2", 5);
+            var BeamPrefab = Object.Instantiate(SpawnBeam.gameObject.Value);
+            Object.DontDestroyOnLoad(BeamPrefab);
+            BeamPrefab.SetActive(false);
+            Object.DestroyImmediate(BeamPrefab.GetComponent<DamageHero>());
+            SpawnBeam.gameObject.Value = BeamPrefab;
+            BeamSweeper.layer = (int)PhysLayers.HERO_ATTACK;
+            BeamPrefab.layer = (int)PhysLayers.HERO_ATTACK;
+            var MySpawnBeam = new SpawnObjects
+            {
+                gameObject = SpawnBeam.gameObject,
+                spawnPoint = SpawnBeam.spawnPoint,
+                position = new Vector3(0, 0, 0),
+                rotation = new Vector3(0, 0, 0),
+                frequency = 0.075f,
+                initialize = (GameObject beam) =>
+                {
+                    var damage = SetDamageEnemy(beam, PlayerData.instance.equippedCharm_19 ? 12 : 8);
+                    damage.direction = 90;
+                }
+            };
+
+            BeamControl.ReplaceAction("Beam Sweep R 2", 4, () => {
+                if (HeroController.instance != null)
+                {
+                    Vector3 position = HeroController.instance.transform.position;
+                    position.y -= 10;
+                    position.x -= 30;
+                    BeamSweeper.transform.position = position;
+                }
+            });
+            BeamControl.ReplaceAction("Beam Sweep R 2", 5, MySpawnBeam);
+
+            BeamControl.GetAction<iTweenMoveBy>("Beam Sweep R 2", 6).vector = new Vector3(0, 50, 0);
+
+            var idle = BeamControl.GetState("Idle");
+            idle.Transitions = new FsmTransition[] { };
+            BeamControl.Fsm.SaveActions();
+            BeamSweeper.SetActive(true);
+        }
+
+        private void SetupSpike()
+        {
+            Object.DestroyImmediate(SpikePrefab.LocateMyFSM("Hero Saver"));
+            Object.DestroyImmediate(SpikePrefab.GetComponent<DamageHero>());
+
+            var SpikeControl = SpikePrefab.LocateMyFSM("Control");
+            SpikeControl.RemoveTransition("Up", "DOWN");
+            SpikeControl.RemoveTransition("Up", "SPIKES DOWN");
+
+            SpikeControl.GetAction<Wait>("Floor Antic", 2).time = 0.4f;
+            SpikeControl.AddAction("Up", new Wait { time = 0.8f, finishEvent = FsmEvent.Finished });
+
+            SpikeControl.GetState("Downed").Transitions = new FsmTransition[] { };
+            SpikeControl.GetState("Floor Antic").Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Spike Up" } };
+            SpikeControl.GetState("Spike Up").Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Up" } };
+            SpikeControl.GetState("Up").Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Down" } };
+            SpikeControl.AddTransition("Downed", "HEROSPIKEUP", "Floor Antic");
+
+            SpikeControl.Fsm.SaveActions();
+            SpikeCenter = new GameObject { name = "HeroSpikeCenter", layer = 23 };
+            SpikeCenter.SetActive(true);
+            Object.DontDestroyOnLoad(SpikeCenter);
         }
 
         // It should take more hits to stun bosses 
@@ -276,9 +419,7 @@ namespace Lightbringer
                 self.integer2.Value /= 3;
             }
             else
-            {
                 orig(self);
-            }
         }
 
         private static void OnNewGame()
@@ -286,7 +427,6 @@ namespace Lightbringer
             PlayerData.instance.maxHealthBase = PlayerData.instance.maxHealth = PlayerData.instance.health = 4;
             PlayerData.instance.charmSlots += 1;
         }
-
 
         private void Awake(On.ShopItemStats.orig_Awake orig, ShopItemStats self)
         {
@@ -300,18 +440,11 @@ namespace Lightbringer
                 ReflectionHelper.GetField<ShopItemStats, GameObject>(self, "itemSprite").GetComponent<SpriteRenderer>().sprite = Sprites[key];
         }
 
-        private IEnumerator WaitHero(Action a)
-        {
-            yield return new WaitWhile(() => HeroController.instance == null);
-            yield return new WaitForSeconds(0.3f);
-            a?.Invoke();
-        }
-
         private void AfterSaveGameLoad(SaveGameData data)
         {
             SaveGameSave();
             GameManager.instance.StartCoroutine(ChangeSprites());
-            GameManager.instance.StartCoroutine(WaitHero(() => SetupActions()));
+            EnableSpells = GameManager.instance.StartCoroutine(WaitHero(SetupActions));
         }
 
         private IEnumerator ChangeSprites()
@@ -377,23 +510,21 @@ namespace Lightbringer
             invNailSprite.level5 = Sprites["LanceInv"];
         }
 
-
         private static void SaveGameSave(int id = 0)
         {
-            PlayerData.instance.charmCost_21 = 1; // Faulty Wallet update patch
-            PlayerData.instance.charmCost_19 = 4; // Eye of the Storm update patch
-            PlayerData.instance.charmCost_15 = 3; // Bloodlust update patch
-            PlayerData.instance.charmCost_14 = 2; // Glass Soul update patch
-            PlayerData.instance.charmCost_8 = 3;  // Rising Light update patch
-            PlayerData.instance.charmCost_35 = 5; // Radiant Jewel update patch
-            PlayerData.instance.charmCost_18 = 3; // Silent Divide update patch
-            PlayerData.instance.charmCost_3 = 2;  // Bloodsong update patch
-            PlayerData.instance.charmCost_38 = 2; // Dreamshield update patch
+            PlayerData.instance.charmCost_21 = 1;
+            PlayerData.instance.charmCost_19 = 4;
+            PlayerData.instance.charmCost_15 = 3;
+            PlayerData.instance.charmCost_14 = 2;
+            PlayerData.instance.charmCost_8 = 3;
+            PlayerData.instance.charmCost_35 = 5;
+            PlayerData.instance.charmCost_18 = 3;
+            PlayerData.instance.charmCost_3 = 2;
+            PlayerData.instance.charmCost_38 = 2;
         }
 
         private static void BeforeSaveGameSave(SaveGameData data = null)
         {
-            // Don't ruin saves
             PlayerData.instance.charmCost_21 = 4;
             PlayerData.instance.charmCost_19 = 3;
             PlayerData.instance.charmCost_15 = 2;
@@ -402,8 +533,13 @@ namespace Lightbringer
             PlayerData.instance.charmCost_35 = 3;
             PlayerData.instance.charmCost_18 = 2;
             PlayerData.instance.charmCost_3 = 1;
-            PlayerData.instance.charmCost_38 = 3; // Dreamshield update patch
+            PlayerData.instance.charmCost_38 = 3;
             PlayerData.instance.nailDamage = PlayerData.instance.nailSmithUpgrades * 4 + 5;
+        }
+
+        private void Attack(On.HeroController.orig_Attack orig, HeroController self, AttackDirection attackdir)
+        {
+            new AttackHandler(_timefracture).Attack(self, attackdir);
         }
 
         private static int Health(int amount)
@@ -431,203 +567,6 @@ namespace Lightbringer
             return amount;
         }
 
-        private void SetupActions()
-        {
-            var spellctrl = HeroController.instance.spellControl;
-            spellctrl.AddAction("Focus", () => {
-                if (PlayerData.instance.equippedCharm_17)
-                {
-                    HKBlast.transform.position = HeroController.instance.transform.position;
-                    HKBlast.LocateMyFSM("Control").SetState("Blast");
-                }
-            });
-            spellctrl.ReplaceTransition("Focus", "FOCUS COMPLETED", "Set HP Amount");
-
-            spellctrl.ReplaceAction("Scream Burst 2", 8, () => {
-                BeamSweeper.LocateMyFSM("Control").SetState("Beam Sweep R 2");
-            });
-            spellctrl.RemoveAction("Scream Burst 2", 3);
-            spellctrl.RemoveAction("Scream Burst 2", 1);
-            spellctrl.RemoveAction("Scream Burst 2", 0);
-
-            spellctrl.ReplaceAction("Fireball 1", 3, SpawnFireball);
-
-            spellctrl.ReplaceAction("Fireball 2", 3, SpawnOrb);
-            spellctrl.ReplaceTransition("Fireball 2", "FINISHED", "Spell End");
-
-            spellctrl.AddAction("Q2 Land", SpawnSpike);
-
-            spellctrl.Fsm.SaveActions();
-        }
-
-        private void SetupSpells()
-        {
-            GameManager.instance.StartCoroutine(WaitHero(() => {
-                SetupOrb();
-                SetupBeam();
-                SetupBlast();
-                SetupSpike();
-            }));
-        }
-        private void SetupOrb()
-        {
-            var orb = OrbPrefab;
-            orb.layer = 17;   // PhysLayers.HERO_ATTACK
-
-            var orbcontrol = orb.LocateMyFSM("Orb Control");
-
-            orbcontrol.AddState("Chase Enemy");
-
-            orbcontrol.ReplaceTransition("Init", "FIRE", "Chase Enemy");
-            orbcontrol.ReplaceTransition("Init", "FINISHED", "Chase Enemy");
-
-            orbcontrol.AddTransition("Chase Enemy", "ORBHIT", "Impact pause");
-            orbcontrol.AddTransition("Chase Enemy", "DISSIPATE", "Dissipate");
-
-            orbcontrol.RemoveState("Orbiting");
-            orbcontrol.RemoveState("Chase Hero");
-
-            orbcontrol.RemoveAction("Init", 2); // SetScale
-
-            orbcontrol.AddAction("Chase Enemy", new Trigger2dEventLayer
-            {
-                trigger = PlayMakerUnity2d.Trigger2DType.OnTriggerEnter2D,
-                collideLayer = 11,
-                sendEvent = FsmEvent.GetFsmEvent("ORBHIT"),
-                collideTag = "",
-                storeCollider = new FsmGameObject()
-            });
-            orbcontrol.AddAction("Chase Enemy", new Trigger2dEventLayer
-            {
-                trigger = PlayMakerUnity2d.Trigger2DType.OnTriggerStay2D,
-                collideLayer = 11,
-                sendEvent = FsmEvent.GetFsmEvent("ORBHIT"),
-                collideTag = "",
-                storeCollider = new FsmGameObject()
-            });
-            orbcontrol.AddAction("Chase Enemy", new Wait
-            {
-                time = 3.5f,
-                finishEvent = FsmEvent.GetFsmEvent("DISSIPATE")
-            });
-
-            orbcontrol.GetAction<Wait>("Impact", 7).time = 0.1f;
-            orbcontrol.Fsm.SaveActions();
-        }
-        private void SetupBlast()
-        {
-            HKBlast.transform.position = HeroController.instance.transform.position;
-            GameObject blast;
-            var fsm = HKBlast.LocateMyFSM("Control");
-            var blastAction = fsm.GetAction<ActivateGameObject>("Blast", 0);
-            blast = Object.Instantiate(blastAction.gameObject.GameObject.Value);
-            blast.name = "MyBlast";
-            Object.DontDestroyOnLoad(blast);
-            blast.transform.SetParent(HKBlast.transform);
-            blast.transform.localPosition = new Vector3(0, 0, 0);
-            blast.SetActive(false);
-            var damager = blast.transform.Find("hero_damager");
-            Object.DestroyImmediate(damager.GetComponent<DamageHero>());
-            HKBlast.layer = (int)PhysLayers.HERO_ATTACK;
-            blast.layer = (int)PhysLayers.HERO_ATTACK;
-            damager.gameObject.layer = (int)PhysLayers.HERO_ATTACK;
-
-            SetDamageEnemy(damager.gameObject, 20).circleDirection = true;
-
-            blastAction.gameObject.GameObject.Value = blast;
-            fsm.Fsm.SaveActions();
-
-            var hkblastfsm = HKBlast.LocateMyFSM("Control");
-            hkblastfsm.AddAction("Blast", () => {
-                Vector3 scale = new Vector3(1, 1, 1);
-                MaterialPropertyBlock prop = new MaterialPropertyBlock();
-                if (PlayerData.instance.equippedCharm_34)
-                    scale *= 3;
-
-                HKBlast.transform.localScale = scale;
-
-                foreach (Transform t in blast.transform)
-                {
-                    var render = t.GetComponent<SpriteRenderer>();
-                    if (render != null)
-                        render.SetPropertyBlock(prop);
-                }
-
-            });
-            var idle = hkblastfsm.GetState("Idle");
-            idle.Transitions = new FsmTransition[] { };
-            hkblastfsm.Fsm.SaveActions();
-            HKBlast.SetActive(true);
-        }
-        private void SetupBeam()
-        {
-            var BeamControl = BeamSweeper.LocateMyFSM("Control");
-
-            var SpawnBeam = BeamControl.GetAction<SpawnObjectFromGlobalPoolOverTime>("Beam Sweep R 2", 5);
-            var BeamPrefab = Object.Instantiate(SpawnBeam.gameObject.Value);
-            Object.DontDestroyOnLoad(BeamPrefab);
-            BeamPrefab.SetActive(false);
-            Object.DestroyImmediate(BeamPrefab.GetComponent<DamageHero>());
-            SpawnBeam.gameObject.Value = BeamPrefab;
-            BeamSweeper.layer = (int)PhysLayers.HERO_ATTACK;
-            BeamPrefab.layer = (int)PhysLayers.HERO_ATTACK;
-            var MySpawnBeam = new SpawnObjects
-            {
-                gameObject = SpawnBeam.gameObject,
-                spawnPoint = SpawnBeam.spawnPoint,
-                position = new Vector3(0, 0, 0),
-                rotation = new Vector3(0, 0, 0),
-                frequency = 0.075f,
-                initialize = (GameObject beam) =>
-                {
-                    var damage = SetDamageEnemy(beam, PlayerData.instance.equippedCharm_19 ? 12 : 8);
-                    damage.direction = 90;
-                }
-            };
-
-            BeamControl.ReplaceAction("Beam Sweep R 2", 4, () => {
-                if (HeroController.instance != null)
-                {
-                    Vector3 position = HeroController.instance.transform.position;
-                    position.y -= 10;
-                    position.x -= 30;
-                    BeamSweeper.transform.position = position;
-                }
-            });
-            BeamControl.ReplaceAction("Beam Sweep R 2", 5, MySpawnBeam);
-
-            BeamControl.GetAction<iTweenMoveBy>("Beam Sweep R 2", 6).vector = new Vector3(0, 50, 0);
-
-            var idle = BeamControl.GetState("Idle");
-            idle.Transitions = new FsmTransition[] { };
-            BeamControl.Fsm.SaveActions();
-            BeamSweeper.SetActive(true);
-        }
-        private void SetupSpike()
-        {
-            Object.DestroyImmediate(SpikePrefab.LocateMyFSM("Hero Saver"));
-            Object.DestroyImmediate(SpikePrefab.GetComponent<DamageHero>());
-
-            var SpikeControl = SpikePrefab.LocateMyFSM("Control");
-            SpikeControl.RemoveTransition("Up", "DOWN");
-            SpikeControl.RemoveTransition("Up", "SPIKES DOWN");
-
-            SpikeControl.GetAction<Wait>("Floor Antic", 2).time = 0.4f;
-            SpikeControl.AddAction("Up", new Wait { time = 0.8f, finishEvent = FsmEvent.Finished });
-
-            SpikeControl.GetState("Downed").Transitions = new FsmTransition[] { };
-            SpikeControl.GetState("Floor Antic").Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Spike Up" } };
-            SpikeControl.GetState("Spike Up").Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Up" } };
-            SpikeControl.GetState("Up").Transitions = new FsmTransition[] { new FsmTransition { FsmEvent = FsmEvent.Finished, ToState = "Down" } };
-            SpikeControl.AddTransition("Downed", "HEROSPIKEUP", "Floor Antic");
-
-            SpikeControl.Fsm.SaveActions();
-            SpikeCenter = new GameObject { name = "HeroSpikeCenter", layer = 23 };
-            SpikeCenter.SetActive(true);
-            Object.DontDestroyOnLoad(SpikeCenter);
-            SpikeCenter.transform.position = HeroController.instance.transform.position;
-        }
-
         private IEnumerator SpawnFireball()
         {
             Vector3 position = HeroController.instance.transform.position + (PlayerData.instance.equippedCharm_4 ? new Vector3(0f, .6f) : new Vector3(0f, .3f));
@@ -649,6 +588,7 @@ namespace Lightbringer
                 miniball.GetComponent<Rigidbody2D>().velocity = velocity;
             }
         }
+
         public IEnumerator SpawnOrb()
         {
             for (int i = 0; i < (PlayerData.instance.equippedCharm_11 ? 2 : 1); i++)
@@ -667,7 +607,7 @@ namespace Lightbringer
 
                 yield return new WaitForSeconds(0.2f);
 
-                if (Orbs[i]?.transform?.parent?.name != "GlobalPool")
+                if (Orbs[i] && Orbs[i].transform?.parent?.name != "GlobalPool")
                     Object.Destroy(Orbs[i]);
 
                 var Orb = OrbPrefab.Spawn();
@@ -686,6 +626,7 @@ namespace Lightbringer
                 yield return new WaitForSeconds(0.3f);
             }
         }
+
         private void SpawnSpike()
         {
             int count = 10;
@@ -710,6 +651,7 @@ namespace Lightbringer
             foreach (var Spike in Spikes)
                 Spike.LocateMyFSM("Control").SendEvent("HEROSPIKEUP");
         }
+
         private bool AddSpikeToPool(int n = 10, float spacing = 0.8f)
         {
             foreach (var Spike in Spikes)
@@ -861,6 +803,35 @@ namespace Lightbringer
 
             _textObj.CrossFadeAlpha(1f, 0f, false);
             _textObj.CrossFadeAlpha(0f, 7f, false);
+        }
+
+        private void CreateCanvas()
+        {
+            if (_canvas != null) return;
+
+            _canvas = CanvasUtil.CreateCanvas(RenderMode.ScreenSpaceOverlay, new Vector2(1920, 1080));
+            Object.DontDestroyOnLoad(_canvas);
+
+            GameObject gameObject = CanvasUtil.CreateTextPanel
+            (
+                _canvas,
+                "",
+                27,
+                TextAnchor.MiddleCenter,
+                new CanvasUtil.RectData
+                (
+                    new Vector2(0, 50),
+                    new Vector2(0, 45),
+                    new Vector2(0, 0),
+                    new Vector2(1, 0),
+                    new Vector2(0.5f, 0.5f)
+                )
+            );
+
+            _textObj = gameObject.GetComponent<Text>();
+            _textObj.font = CanvasUtil.TrajanBold;
+            _textObj.text = "";
+            _textObj.fontSize = 42;
         }
 
         private int SoulGain(int amount)

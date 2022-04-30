@@ -18,7 +18,7 @@ namespace Lightbringer {
             ["CHARM_DESC_16"] =
                 "Contains a radiant spell that transforms swift glitters into deadly weapons.\n\nWhen using Light Dash, the bearer's body will sharpen and damage enemies.",
             ["CHARM_DESC_17"] =
-                "Radiates an intense flash of light when exposed to SOUL.\n\nWhen focusing SOUL, emit a blast of light that damages enemies. Increases SOUL regeneration rate slightly.",
+                "Radiates an intense flash of light when exposed to SOUL.\n\nWhen focusing SOUL, emits a blast of light that damages enemies. Increases SOUL regeneration rate slightly.",
             ["CHARM_DESC_18"] = "A metal badge that is cold to the touch. It brings back warm memories.\n\nFire lances in both directions when attacking.",
             ["CHARM_DESC_20"] =
                 "A token given to those embarking on a great journey.\n\nSplit the lance attack into two projectiles, allowing the user to hit multiple enemies at once (cannot hit the same enemy twice).",
