@@ -19,7 +19,7 @@ using USceneManager = UnityEngine.SceneManagement.SceneManager;
 namespace Lightbringer
 {
     [UsedImplicitly]
-    public partial class Lightbringer : Mod, ITogglableMod, IGlobalSettings<LightbringerSettings>
+    public partial class Lightbringer : Mod, IMenuMod, ITogglableMod, IGlobalSettings<LightbringerSettings>
     {
         private const float ORIG_RUN_SPEED = 8.3f;
         private const float ORIG_RUN_SPEED_CH = 12f;
@@ -65,6 +65,34 @@ namespace Lightbringer
         public LightbringerSettings Settings = new LightbringerSettings();
         public void OnLoadGlobal(LightbringerSettings settings) => Settings = settings;
         public LightbringerSettings OnSaveGlobal() => Settings;
+
+        public bool ToggleButtonInsideMenu => true;
+
+        public List<IMenuMod.MenuEntry> GetMenuData(IMenuMod.MenuEntry? toggleButtonEntry) =>
+            new List<IMenuMod.MenuEntry> {
+                toggleButtonEntry.Value,
+                new IMenuMod.MenuEntry {
+                    Name = "Empress Muzznik",
+                    Description = "Turns Gruz Mother into a worthy challenge",
+                    Values = new string[] { "On", "Off" },
+                    Saver = option => Settings.EmpressMuzznik = (option == 0),
+                    Loader = () => Settings.EmpressMuzznik ? 0 : 1
+                },
+                new IMenuMod.MenuEntry {
+                    Name = "Double Kin",
+                    Description = "Doubles the Lost Kin for double the fun",
+                    Values = new string[] { "On", "Off" },
+                    Saver = option => Settings.DoubleKin = (option == 0),
+                    Loader = () => Settings.DoubleKin ? 0 : 1
+                },
+                new IMenuMod.MenuEntry {
+                    Name = "Nail Collision",
+                    Description = "At short distance, your lance acts as a nail to break otherwise unbreakable objets. You can use your upward slash instead.",
+                    Values = new string[] { "On", "Off" },
+                    Saver = option => Settings.NailCollision = (option == 0),
+                    Loader = () => Settings.NailCollision ? 0 : 1
+                }
+            };
 
         public override string GetVersion() => Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
