@@ -96,13 +96,6 @@ namespace Lightbringer
             RegisterCallbacks();
         }
 
-        private IEnumerator WaitHero(Action a)
-        {
-            yield return new WaitWhile(() => HeroController.instance == null);
-            yield return new WaitForSeconds(0.3f);
-            a?.Invoke();
-        }
-
         private void RegisterCallbacks()
         {
             ModHooks.AfterSavegameLoadHook += AfterSaveGameLoad;
