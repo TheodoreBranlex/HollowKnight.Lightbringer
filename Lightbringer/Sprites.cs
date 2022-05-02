@@ -9,8 +9,7 @@ namespace Lightbringer
 {
     public static class Sprites
     {
-        internal static Dictionary<string, Sprite> customSprites;
-        internal static Dictionary<string, Sprite> originalSprites;
+        internal static Dictionary<string, Sprite> originalSprites, customSprites;
 
         internal static void Load()
         {
@@ -30,13 +29,12 @@ namespace Lightbringer
                     stream.Dispose();
 
                     // Create texture from bytes
-                    var tex = new Texture2D(2, 2);
+                    var texture = new Texture2D(2, 2);
 
-                    tex.LoadImage(buffer, true);
+                    texture.LoadImage(buffer, true);
 
-                    // Create sprite from texture
                     // Substring is to cut off the Lightbringer. and the .png
-                    customSprites.Add(res.Substring(23, res.Length - 27), Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f)));
+                    customSprites.Add(res.Substring(23, res.Length - 27), CreateSprite(texture));
                 }
             }
         }
@@ -59,55 +57,42 @@ namespace Lightbringer
             foreach (int i in new int[] { 2, 3, 4, 6, 8, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 25, 26, 35 })
                 CharmIconList.Instance.spriteList[i] = sprites["Charms." + i];
 
-            HeroController.instance.geoCounter.geoSprite.GetComponent<tk2dSprite>()
-                          .GetCurrentSpriteDef()
-                          .material.mainTexture = sprites["UI"].texture;
+            var ui = HeroController.instance.geoCounter.geoSprite.GetComponent<tk2dSprite>();
+            ui.GetCurrentSpriteDef().material.mainTexture = sprites["UI"].texture;
 
             CharmIconList.Instance.unbreakableStrength = sprites["Charms.ustr"];
 
-            GameObject.Find("/_GameCameras/HudCamera/Inventory/Charms/Collected Charms/25")
-                .LocateMyFSM("charm_show_if_collected")
-                .GetAction<SetSpriteRendererSprite>("Glass Attack", 2)
-                .sprite.Value = sprites["Charms.brokestr"];
-            GameObject.Find("/_GameCameras/HudCamera/Inventory/Charms/Details/Detail Sprite")
-                .LocateMyFSM("Update Sprite")
-                .GetAction<SetSpriteRendererSprite>("Glass Attack", 2)
-                .sprite.Value = sprites["Charms.brokestr"];
+            var strength = GameObject.Find("/_GameCameras/HudCamera/Inventory/Charms/Collected Charms/25");
+            var brokenStrength = strength.LocateMyFSM("charm_show_if_collected").GetAction<SetSpriteRendererSprite>("Glass Attack", 2);
+            brokenStrength.sprite.Value = sprites["Charms.brokestr"];
 
-            HeroController.instance.grubberFlyBeamPrefabL.GetComponent<tk2dSprite>()
-                          .GetCurrentSpriteDef()
-                          .material.mainTexture = sprites["Lances"].texture;
+            var detailedCharm = GameObject.Find("/_GameCameras/HudCamera/Inventory/Charms/Details/Detail Sprite");
+            var detailedBrokenStrength = detailedCharm.LocateMyFSM("Update Sprite").GetAction<SetSpriteRendererSprite>("Glass Attack", 2);
+            detailedBrokenStrength.sprite.Value = sprites["Charms.brokestr"];
 
-            HeroController.instance.gameObject.GetComponent<tk2dSprite>()
-                          .GetCurrentSpriteDef()
-                          .material.mainTexture = sprites["Knight"].texture;
+            var lances = HeroController.instance.grubberFlyBeamPrefabL.GetComponent<tk2dSprite>();
+            lances.GetCurrentSpriteDef().material.mainTexture = sprites["Lances"].texture;
 
-            HeroController.instance.gameObject.GetComponent<tk2dSpriteAnimator>()
-                          .GetClipByName("Sprint")
-                          .frames[0]
-                          .spriteCollection.spriteDefinitions[0]
-                          .material.mainTexture = sprites["Sprint"].texture;
+            var knight = HeroController.instance.gameObject.GetComponent<tk2dSprite>();
+            knight.GetCurrentSpriteDef().material.mainTexture = sprites["Knight"].texture;
 
-            GameObject.Find("/Knight/Effects/Shadow Dash Blobs")
-                .GetComponent<ParticleSystemRenderer>()
-                .material.mainTexture = sprites["Void"].texture;
+            var sprint = HeroController.instance.gameObject.GetComponent<tk2dSpriteAnimator>();
+            sprint.GetClipByName("Sprint").frames[0].spriteCollection.spriteDefinitions[0].material.mainTexture = sprites["Sprint"].texture;
 
-            foreach (Transform child in HeroController.instance.transform)
-                if (child.name == "Spells")
-                    foreach (Transform spellsChild in child)
-                        if (spellsChild.name == "Scr Heads 2" || spellsChild.name == "Scr Base 2")
-                            spellsChild.gameObject.GetComponent<tk2dSprite>()
-                                .GetCurrentSpriteDef()
-                                .material.mainTexture = sprites["VoidSpells"].texture;
+            var voidParticle = GameObject.Find("/Knight/Effects/Shadow Dash Blobs");
+            voidParticle.GetComponent<ParticleSystemRenderer>().material.mainTexture = sprites["VoidParticle"].texture;
 
-            var invNail = GameObject.Find("/_GameCameras/HudCamera/Inventory/Inv/Inv_Items/Nail");
-            var invNailSprite = invNail.GetComponent<InvNailSprite>();
+            var spells1 = GameObject.Find("/Knight/Spells/Scr Heads 2").GetComponent<tk2dSprite>();
+            var spells2 = GameObject.Find("/Knight/Spells/Scr Base 2").GetComponent<tk2dSprite>();
+            spells1.GetCurrentSpriteDef().material.mainTexture = sprites["VoidSpells"].texture;
+            spells2.GetCurrentSpriteDef().material.mainTexture = sprites["VoidSpells"].texture;
 
-            invNailSprite.level1 = sprites[restore ? "Nail1" : "LanceInv"];
-            invNailSprite.level2 = sprites[restore ? "Nail2" : "LanceInv"];
-            invNailSprite.level3 = sprites[restore ? "Nail3" : "LanceInv"];
-            invNailSprite.level4 = sprites[restore ? "Nail4" : "LanceInv"];
-            invNailSprite.level5 = sprites[restore ? "Nail5" : "LanceInv"];
+            var invNail = GameObject.Find("/_GameCameras/HudCamera/Inventory/Inv/Inv_Items/Nail").GetComponent<InvNailSprite>();
+            invNail.level1 = sprites[restore ? "Nail1" : "LanceInv"];
+            invNail.level2 = sprites[restore ? "Nail2" : "LanceInv"];
+            invNail.level3 = sprites[restore ? "Nail3" : "LanceInv"];
+            invNail.level4 = sprites[restore ? "Nail4" : "LanceInv"];
+            invNail.level5 = sprites[restore ? "Nail5" : "LanceInv"];
         }
 
         private static void Save()
@@ -117,56 +102,41 @@ namespace Lightbringer
             foreach (int i in new int[] { 2, 3, 4, 6, 8, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 25, 26, 35 })
                 originalSprites["Charms." + i] = CharmIconList.Instance.spriteList[i];
 
-            Texture2D UI = HeroController.instance.geoCounter.geoSprite.GetComponent<tk2dSprite>().GetCurrentSpriteDef().material.mainTexture as Texture2D;
-            originalSprites["UI"] = Sprite.Create(UI, new Rect(0, 0, UI.width, UI.height), new Vector2(0.5f, 0.5f));
+            var ui = HeroController.instance.geoCounter.geoSprite.GetComponent<tk2dSprite>();
+            originalSprites["UI"] = CreateSprite(ui.GetCurrentSpriteDef().material.mainTexture as Texture2D);
 
             originalSprites["Charms.ustr"] = CharmIconList.Instance.unbreakableStrength;
 
-            originalSprites["Charms.brokestr"] = GameObject.Find("/_GameCameras/HudCamera/Inventory/Charms/Collected Charms/25")
-                .LocateMyFSM("charm_show_if_collected")
-                .GetAction<SetSpriteRendererSprite>("Glass Attack", 2)
-                .sprite.Value as Sprite;
-            originalSprites["Charms.brokestr"] = GameObject.Find("/_GameCameras/HudCamera/Inventory/Charms/Details/Detail Sprite")
-                .LocateMyFSM("Update Sprite")
-                .GetAction<SetSpriteRendererSprite>("Glass Attack", 2)
-                .sprite.Value as Sprite;
+            var strength = GameObject.Find("/_GameCameras/HudCamera/Inventory/Charms/Collected Charms/25");
+            var brokenStrength = strength.LocateMyFSM("charm_show_if_collected").GetAction<SetSpriteRendererSprite>("Glass Attack", 2);
+            originalSprites["Charms.brokestr"] = brokenStrength.sprite.Value as Sprite;
 
-            Texture2D Lances = HeroController.instance.grubberFlyBeamPrefabL.GetComponent<tk2dSprite>()
-                          .GetCurrentSpriteDef()
-                          .material.mainTexture as Texture2D;
-            originalSprites["Lances"] = Sprite.Create(Lances, new Rect(0, 0, Lances.width, Lances.height), new Vector2(0.5f, 0.5f));
+            var lances = HeroController.instance.grubberFlyBeamPrefabL.GetComponent<tk2dSprite>();
+            originalSprites["Lances"] = CreateSprite(lances.GetCurrentSpriteDef().material.mainTexture as Texture2D);
 
-            Texture2D Knight = HeroController.instance.gameObject.GetComponent<tk2dSprite>()
-                          .GetCurrentSpriteDef()
-                          .material.mainTexture as Texture2D;
-            originalSprites["Knight"] = Sprite.Create(Knight, new Rect(0, 0, Knight.width, Knight.height), new Vector2(0.5f, 0.5f));
+            var knight = HeroController.instance.gameObject.GetComponent<tk2dSprite>();
+            originalSprites["Knight"] = CreateSprite(knight.GetCurrentSpriteDef().material.mainTexture as Texture2D);
 
-            Texture2D Sprint = HeroController.instance.gameObject.GetComponent<tk2dSpriteAnimator>()
-                          .GetClipByName("Sprint")
-                          .frames[0]
-                          .spriteCollection.spriteDefinitions[0]
-                          .material.mainTexture as Texture2D;
-            originalSprites["Sprint"] = Sprite.Create(Sprint, new Rect(0, 0, Sprint.width, Sprint.height), new Vector2(0.5f, 0.5f));
+            var sprint = HeroController.instance.gameObject.GetComponent<tk2dSpriteAnimator>();
+            originalSprites["Sprint"] = CreateSprite(sprint.GetClipByName("Sprint").frames[0].spriteCollection.spriteDefinitions[0].material.mainTexture as Texture2D);
 
-            Texture2D Void = GameObject.Find("/Knight/Effects/Shadow Dash Blobs")
-                .GetComponent<ParticleSystemRenderer>()
-                .material.mainTexture as Texture2D;
-            originalSprites["Void"] = Sprite.Create(Void, new Rect(0, 0, Void.width, Void.height), new Vector2(0.5f, 0.5f));
+            var voidParticle = GameObject.Find("/Knight/Effects/Shadow Dash Blobs");
+            originalSprites["VoidParticle"] = CreateSprite(voidParticle.GetComponent<ParticleSystemRenderer>().material.mainTexture as Texture2D);
 
-            Texture2D VoidSpells = GameObject.Find("/Knight/Spells/Scr Base 2")
-                .GetComponent<tk2dSprite>()
-                .GetCurrentSpriteDef()
-                .material.mainTexture as Texture2D;
-            originalSprites["VoidSpells"] = Sprite.Create(VoidSpells, new Rect(0, 0, VoidSpells.width, VoidSpells.height), new Vector2(0.5f, 0.5f));
+            var spells = GameObject.Find("/Knight/Spells/Scr Heads 2").GetComponent<tk2dSprite>();
+            originalSprites["VoidSpells"] = CreateSprite(spells.GetCurrentSpriteDef().material.mainTexture as Texture2D);
 
-            var invNail = GameObject.Find("/_GameCameras/HudCamera/Inventory/Inv/Inv_Items/Nail");
-            var invNailSprite = invNail.GetComponent<InvNailSprite>();
+            var invNail = GameObject.Find("/_GameCameras/HudCamera/Inventory/Inv/Inv_Items/Nail").GetComponent<InvNailSprite>();
+            originalSprites["Nail1"] = invNail.level1;
+            originalSprites["Nail2"] = invNail.level2;
+            originalSprites["Nail3"] = invNail.level3;
+            originalSprites["Nail4"] = invNail.level4;
+            originalSprites["Nail5"] = invNail.level5;
+        }
 
-            originalSprites["Nail1"] = invNailSprite.level1;
-            originalSprites["Nail2"] = invNailSprite.level2;
-            originalSprites["Nail3"] = invNailSprite.level3;
-            originalSprites["Nail4"] = invNailSprite.level4;
-            originalSprites["Nail5"] = invNailSprite.level5;
+        private static Sprite CreateSprite(Texture2D texture)
+        {
+            return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
         }
     }
 }

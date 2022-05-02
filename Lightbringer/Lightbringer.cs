@@ -45,16 +45,6 @@ namespace Lightbringer
 
         Coroutine enableSpells;
 
-        GameObject orbPrefab;
-        GameObject[] orbs = { null, null };
-        GameObject shotCharge;
-        GameObject shotCharge2;
-        GameObject beamSweeper;
-        GameObject blastPrefab;
-        GameObject spikePrefab;
-        GameObject spikeCenter;
-        List<GameObject> spikes = new List<GameObject>();
-
         public override string GetVersion() => Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
         public Settings settings = new Settings();
@@ -99,7 +89,7 @@ namespace Lightbringer
 
             GameManager.instance.StartCoroutine(WaitHero(() => { SetupOrb(); SetupBeam(); SetupBlast(); SetupSpike(); }));
             if (HeroController.instance) // If enabled during gameplay
-                enableSpells = GameManager.instance.StartCoroutine(WaitHero(SetupSpells));
+                enableSpells = GameManager.instance.StartCoroutine(WaitHero(SetupActions));
 
             GameManager.instance.StartCoroutine(Sprites.Change());
 
@@ -189,7 +179,7 @@ namespace Lightbringer
                 GameManager.instance.StopCoroutine(enableSpells);
 
             if (HeroController.instance)
-                ResetSpells();
+                ResetActions();
 
             GameManager.instance.StartCoroutine(Sprites.Change(true));
 
@@ -201,7 +191,7 @@ namespace Lightbringer
         {
             SaveGameSave();
             GameManager.instance.StartCoroutine(Sprites.Change());
-            enableSpells = GameManager.instance.StartCoroutine(WaitHero(SetupSpells));
+            enableSpells = GameManager.instance.StartCoroutine(WaitHero(SetupActions));
         }
 
         private static void SaveGameSave(int id = 0)
@@ -455,7 +445,10 @@ namespace Lightbringer
 
             string key = "Charms." + pdbool.Substring(9, pdbool.Length - 9);
             if (Sprites.customSprites.ContainsKey(key))
-                ReflectionHelper.GetField<ShopItemStats, GameObject>(self, "itemSprite").GetComponent<SpriteRenderer>().sprite = Sprites.customSprites[key];
+            {
+                var itemSprite = ReflectionHelper.GetField<ShopItemStats, GameObject>(self, "itemSprite");
+                itemSprite.GetComponent<SpriteRenderer>().sprite = Sprites.customSprites[key];
+            }
         }
 
         private void SceneLoadedHook(Scene arg0, LoadSceneMode lsm)

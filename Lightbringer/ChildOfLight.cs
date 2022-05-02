@@ -10,6 +10,16 @@ namespace Lightbringer
 {
     public partial class Lightbringer
     {
+        GameObject orbPrefab;
+        GameObject[] orbs = { null, null };
+        GameObject shotCharge;
+        GameObject shotCharge2;
+        GameObject beamSweeper;
+        GameObject blastPrefab;
+        GameObject spikePrefab;
+        GameObject spikeCenter;
+        List<GameObject> spikes = new List<GameObject>();
+
         public override List<(string, string)> GetPreloadNames()
         {
             return new List<(string, string)>
@@ -31,10 +41,10 @@ namespace Lightbringer
             orbPrefab.SetActive(false);
             shotCharge = radiance.transform.Find("Shot Charge").gameObject;
             shotCharge2 = radiance.transform.Find("Shot Charge 2").gameObject;
-            var finalcontrol = orbPrefab.LocateMyFSM("Final Control");
-            Object.DestroyImmediate(finalcontrol);
-            var herohurter = orbPrefab.transform.Find("Hero Hurter").GetComponent<DamageHero>();
-            Object.DestroyImmediate(herohurter);
+            var finalControl = orbPrefab.LocateMyFSM("Final Control");
+            Object.DestroyImmediate(finalControl);
+            var heroHurter = orbPrefab.transform.Find("Hero Hurter").GetComponent<DamageHero>();
+            Object.DestroyImmediate(heroHurter);
             beamSweeper = preloadedObjects["GG_Radiance"]["Boss Control/Beam Sweeper"];
             beamSweeper.transform.SetParent(null);
 
@@ -43,7 +53,7 @@ namespace Lightbringer
             spikePrefab = preloadedObjects["GG_Radiance"]["Boss Control/Spike Control/Far L/Radiant Spike"];
         }
 
-        private void SetupSpells()
+        private void SetupActions()
         {
             var spellControl = HeroController.instance.spellControl;
             spellControl.AddAction("Focus", () => {
@@ -70,7 +80,7 @@ namespace Lightbringer
             spellControl.AddAction("Q2 Land", SpawnSpike);
         }
 
-        private void ResetSpells()
+        private void ResetActions()
         {
             var spellControl = HeroController.instance.spellControl;
             spellControl.Fsm.Reinitialize();
