@@ -10,16 +10,6 @@ namespace Lightbringer
 {
     public partial class Lightbringer
     {
-        GameObject orbPrefab;
-        GameObject[] orbs = { null, null };
-        GameObject shotCharge;
-        GameObject shotCharge2;
-        GameObject beamSweeper;
-        GameObject blastPrefab;
-        GameObject spikePrefab;
-        GameObject spikeCenter;
-        List<GameObject> spikes = new List<GameObject>();
-
         public override List<(string, string)> GetPreloadNames()
         {
             return new List<(string, string)>
@@ -30,30 +20,21 @@ namespace Lightbringer
                 ("GG_Hollow_Knight","Battle Scene/Focus Blasts/HK Prime Blast"),
             };
         }
+    }
 
-        private void GetPrefabs(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
-        {
-            var radiance = preloadedObjects["GG_Radiance"]["Boss Control/Absolute Radiance"];
-            var fsm = radiance.LocateMyFSM("Attack Commands");
-            var spawnAction = fsm.GetAction<SpawnObjectFromGlobalPool>("Spawn Fireball", 1);
-            orbPrefab = Object.Instantiate(spawnAction.gameObject.Value, null);
-            Object.DontDestroyOnLoad(orbPrefab);
-            orbPrefab.SetActive(false);
-            shotCharge = radiance.transform.Find("Shot Charge").gameObject;
-            shotCharge2 = radiance.transform.Find("Shot Charge 2").gameObject;
-            var finalControl = orbPrefab.LocateMyFSM("Final Control");
-            Object.DestroyImmediate(finalControl);
-            var heroHurter = orbPrefab.transform.Find("Hero Hurter").GetComponent<DamageHero>();
-            Object.DestroyImmediate(heroHurter);
-            beamSweeper = preloadedObjects["GG_Radiance"]["Boss Control/Beam Sweeper"];
-            beamSweeper.transform.SetParent(null);
+    public static class ChildOfLight
+    {
+        static GameObject orbPrefab;
+        static GameObject[] orbs = { null, null };
+        static GameObject shotCharge;
+        static GameObject shotCharge2;
+        static GameObject beamSweeper;
+        static GameObject blastPrefab;
+        static GameObject spikePrefab;
+        static GameObject spikeCenter;
+        static List<GameObject> spikes = new List<GameObject>();
 
-            blastPrefab = preloadedObjects["GG_Hollow_Knight"]["Battle Scene/Focus Blasts/HK Prime Blast"];
-
-            spikePrefab = preloadedObjects["GG_Radiance"]["Boss Control/Spike Control/Far L/Radiant Spike"];
-        }
-
-        private void SetupActions()
+        internal static void Enable()
         {
             var spellControl = HeroController.instance.spellControl;
             spellControl.AddAction("Focus", () => {
@@ -80,7 +61,7 @@ namespace Lightbringer
             spellControl.AddAction("Q2 Land", SpawnSpike);
         }
 
-        private void ResetActions()
+        internal static void Disable()
         {
             var spellControl = HeroController.instance.spellControl;
             spellControl.Fsm.Reinitialize();
@@ -88,8 +69,32 @@ namespace Lightbringer
             spellControl.ReplaceTransition("Fireball 2", "FINISHED", "Fireball Recoil");
         }
 
-        private void SetupOrb()
+        internal static void Setup(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
+            var radiance = preloadedObjects["GG_Radiance"]["Boss Control/Absolute Radiance"];
+            var radianceAttacks = radiance.LocateMyFSM("Attack Commands");
+            var spawnAction = radianceAttacks.GetAction<SpawnObjectFromGlobalPool>("Spawn Fireball", 1);
+            orbPrefab = Object.Instantiate(spawnAction.gameObject.Value, null);
+            shotCharge = radiance.transform.Find("Shot Charge").gameObject;
+            shotCharge2 = radiance.transform.Find("Shot Charge 2").gameObject;
+            SetupOrb();
+
+            beamSweeper = preloadedObjects["GG_Radiance"]["Boss Control/Beam Sweeper"];
+            beamSweeper.transform.SetParent(null);
+            SetupBeam();
+
+            blastPrefab = preloadedObjects["GG_Hollow_Knight"]["Battle Scene/Focus Blasts/HK Prime Blast"];
+            SetupBlast();
+
+            spikePrefab = preloadedObjects["GG_Radiance"]["Boss Control/Spike Control/Far L/Radiant Spike"];
+            SetupSpike();
+        }
+
+        private static void SetupOrb()
+        {
+            Object.DestroyImmediate(orbPrefab.LocateMyFSM("Final Control"));
+            Object.DestroyImmediate(orbPrefab.transform.Find("Hero Hurter").GetComponent<DamageHero>());
+
             orbPrefab.layer = (int)PhysLayers.HERO_ATTACK;
 
             var orbControl = orbPrefab.LocateMyFSM("Orb Control");
@@ -130,14 +135,17 @@ namespace Lightbringer
             });
 
             orbControl.GetAction<Wait>("Impact", 7).time = 0.1f;
+
             orbControl.Fsm.SaveActions();
+            Object.DontDestroyOnLoad(orbPrefab);
+            orbPrefab.SetActive(false);
         }
 
-        private void SetupBlast()
+        private static void SetupBlast()
         {
             GameObject blast;
-            var fsm = blastPrefab.LocateMyFSM("Control");
-            var blastAction = fsm.GetAction<ActivateGameObject>("Blast", 0);
+            var blastControl = blastPrefab.LocateMyFSM("Control");
+            var blastAction = blastControl.GetAction<ActivateGameObject>("Blast", 0);
             blast = Object.Instantiate(blastAction.gameObject.GameObject.Value);
             blast.name = "MyBlast";
             Object.DontDestroyOnLoad(blast);
@@ -153,7 +161,7 @@ namespace Lightbringer
             SetDamageEnemy(damager.gameObject, 20).circleDirection = true;
 
             blastAction.gameObject.GameObject.Value = blast;
-            fsm.Fsm.SaveActions();
+            blastControl.Fsm.SaveActions();
 
             var blastFsm = blastPrefab.LocateMyFSM("Control");
             blastFsm.AddAction("Blast", () => {
@@ -161,24 +169,21 @@ namespace Lightbringer
                 MaterialPropertyBlock prop = new MaterialPropertyBlock();
                 if (PlayerData.instance.equippedCharm_34)
                     scale *= 3;
-
                 blastPrefab.transform.localScale = scale;
-
-                foreach (Transform t in blast.transform)
+                foreach (Transform transform in blast.transform)
                 {
-                    var render = t.GetComponent<SpriteRenderer>();
+                    var render = transform.GetComponent<SpriteRenderer>();
                     if (render != null)
                         render.SetPropertyBlock(prop);
                 }
-
             });
-            var idle = blastFsm.GetState("Idle");
-            idle.Transitions = new FsmTransition[] { };
+            blastFsm.GetState("Idle").Transitions = new FsmTransition[] { };
+
             blastFsm.Fsm.SaveActions();
             blastPrefab.SetActive(true);
         }
 
-        private void SetupBeam()
+        private static void SetupBeam()
         {
             var beamControl = beamSweeper.LocateMyFSM("Control");
 
@@ -190,7 +195,7 @@ namespace Lightbringer
             spawnBeam.gameObject.Value = beamPrefab;
             beamSweeper.layer = (int)PhysLayers.HERO_ATTACK;
             beamPrefab.layer = (int)PhysLayers.HERO_ATTACK;
-            var MySpawnBeam = new SpawnObjects
+            var customSpawnBeam = new SpawnObjects
             {
                 gameObject = spawnBeam.gameObject,
                 spawnPoint = spawnBeam.spawnPoint,
@@ -213,17 +218,18 @@ namespace Lightbringer
                     beamSweeper.transform.position = position;
                 }
             });
-            beamControl.ReplaceAction("Beam Sweep R 2", 5, MySpawnBeam);
+            beamControl.ReplaceAction("Beam Sweep R 2", 5, customSpawnBeam);
 
             beamControl.GetAction<iTweenMoveBy>("Beam Sweep R 2", 6).vector = new Vector3(0, 50, 0);
 
             var idle = beamControl.GetState("Idle");
             idle.Transitions = new FsmTransition[] { };
+
             beamControl.Fsm.SaveActions();
             beamSweeper.SetActive(true);
         }
 
-        private void SetupSpike()
+        private static void SetupSpike()
         {
             Object.DestroyImmediate(spikePrefab.LocateMyFSM("Hero Saver"));
             Object.DestroyImmediate(spikePrefab.GetComponent<DamageHero>());
@@ -242,12 +248,12 @@ namespace Lightbringer
             spikeControl.AddTransition("Downed", "HEROSPIKEUP", "Floor Antic");
 
             spikeControl.Fsm.SaveActions();
+
             spikeCenter = new GameObject { name = "HeroSpikeCenter", layer = 23 };
-            spikeCenter.SetActive(true);
             Object.DontDestroyOnLoad(spikeCenter);
         }
 
-        private IEnumerator SpawnFireball()
+        private static IEnumerator SpawnFireball()
         {
             Vector3 position = HeroController.instance.transform.position + (PlayerData.instance.equippedCharm_4 ? new Vector3(0f, .6f) : new Vector3(0f, .3f));
             var fireballCast = HeroController.instance.spell1Prefab.Spawn(position).LocateMyFSM("Fireball Cast");
@@ -269,13 +275,13 @@ namespace Lightbringer
             }
         }
 
-        public IEnumerator SpawnOrb()
+        public static IEnumerator SpawnOrb()
         {
             for (int i = 0; i < (PlayerData.instance.equippedCharm_11 ? 2 : 1); i++)
             {
                 var position = new Vector3(HeroController.instance.transform.position.x + UnityEngine.Random.Range(-2, 2), HeroController.instance.transform.position.y + 2 + UnityEngine.Random.Range(-3, 2));
-                var shotCharge = Object.Instantiate(this.shotCharge);
-                var shotCharge2 = Object.Instantiate(this.shotCharge2);
+                var shotCharge = Object.Instantiate(ChildOfLight.shotCharge);
+                var shotCharge2 = Object.Instantiate(ChildOfLight.shotCharge2);
                 shotCharge.transform.position = position;
                 shotCharge2.transform.position = position;
                 shotCharge.SetActive(true);
@@ -307,7 +313,7 @@ namespace Lightbringer
             }
         }
 
-        private void SpawnSpike()
+        private static void SpawnSpike()
         {
             int count = 10;
             float spacing = 0.8f;
@@ -332,7 +338,7 @@ namespace Lightbringer
                 spike.LocateMyFSM("Control").SendEvent("HEROSPIKEUP");
         }
 
-        private bool AddSpikeToPool(int n = 10, float spacing = 0.8f)
+        private static bool AddSpikeToPool(int n = 10, float spacing = 0.8f)
         {
             foreach (var spike in spikes)
                 Object.Destroy(spike);
@@ -351,7 +357,7 @@ namespace Lightbringer
             return true;
         }
 
-        public DamageEnemies SetDamageEnemy(GameObject go, int value = 0)
+        private static DamageEnemies SetDamageEnemy(GameObject go, int value = 0)
         {
             var damage = go.GetComponent<DamageEnemies>() ?? go.AddComponent<DamageEnemies>();
             damage.attackType = AttackTypes.Spell;

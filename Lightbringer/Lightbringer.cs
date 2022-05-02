@@ -43,7 +43,7 @@ namespace Lightbringer
 
         internal static readonly Random random = new Random();
 
-        Coroutine enableSpells;
+        internal bool enableSpells;
 
         public override string GetVersion() => Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
@@ -84,14 +84,11 @@ namespace Lightbringer
             instance = this;
 
             if (preloadedObjects != null) // Else prefabs where already loaded
-                GetPrefabs(preloadedObjects);
+                ChildOfLight.Setup(preloadedObjects);
+            enableSpells = true;
+
             Sprites.Load();
-
-            GameManager.instance.StartCoroutine(WaitHero(() => { SetupOrb(); SetupBeam(); SetupBlast(); SetupSpike(); }));
-            if (HeroController.instance) // If enabled during gameplay
-                enableSpells = GameManager.instance.StartCoroutine(WaitHero(SetupActions));
-
-            GameManager.instance.StartCoroutine(Sprites.Change());
+            GameManager.instance.StartCoroutine(Sprites.Change(true));
 
             if (PlayerData.instance != null)
                 SaveGameSave();
@@ -175,13 +172,11 @@ namespace Lightbringer
 
             ModHooks.LanguageGetHook -= Language.LangGet;
 
-            if (enableSpells != null)
-                GameManager.instance.StopCoroutine(enableSpells);
-
+            enableSpells = false;
             if (HeroController.instance)
-                ResetActions();
+                ChildOfLight.Disable();
 
-            GameManager.instance.StartCoroutine(Sprites.Change(true));
+            GameManager.instance.StartCoroutine(Sprites.Change(false));
 
             if (PlayerData.instance != null)
                 BeforeSaveGameSave();
@@ -190,8 +185,8 @@ namespace Lightbringer
         private void AfterSaveGameLoad(SaveGameData data)
         {
             SaveGameSave();
-            GameManager.instance.StartCoroutine(Sprites.Change());
-            enableSpells = GameManager.instance.StartCoroutine(WaitHero(SetupActions));
+            GameManager.instance.StartCoroutine(Sprites.Change(true));
+            enableSpells = true;
         }
 
         private static void SaveGameSave(int id = 0)
@@ -325,12 +320,10 @@ namespace Lightbringer
 
         private void CharmUpdate(PlayerData pd, HeroController self)
         {
-            HeroController heroController = HeroController.instance;
-
             // Charm Costs
             SaveGameSave();
 
-            GameManager.instance.StartCoroutine(Sprites.Change());
+            GameManager.instance.StartCoroutine(Sprites.Change(true));
 
             // Tiny Shell charm
             if (PlayerData.instance.equippedCharm_4)
@@ -346,9 +339,9 @@ namespace Lightbringer
 
             if (!PlayerData.instance.equippedCharm_2)
             {
-                heroController.RUN_SPEED = ORIG_RUN_SPEED;
-                heroController.RUN_SPEED_CH = ORIG_RUN_SPEED_CH;
-                heroController.RUN_SPEED_CH_COMBO = ORIG_RUN_SPEED_CH_COMBO;
+                HeroController.instance.RUN_SPEED = ORIG_RUN_SPEED;
+                HeroController.instance.RUN_SPEED_CH = ORIG_RUN_SPEED_CH;
+                HeroController.instance.RUN_SPEED_CH_COMBO = ORIG_RUN_SPEED_CH_COMBO;
             }
 
             pd.isInvincible = false;
@@ -356,7 +349,6 @@ namespace Lightbringer
             // Reset time to normal
             Time.timeScale = 1f;
             timeFracture = 1f;
-
 
             // BURNING PRIDE CALCULATIONS
             pd.nailDamage = settings.NailDamage + pd.nailSmithUpgrades * settings.NailUpgradeBonus;
@@ -460,7 +452,7 @@ namespace Lightbringer
 
         private IEnumerator SceneLoaded(Scene arg0)
         {
-            GameManager.instance.StartCoroutine(Sprites.Change());
+            GameManager.instance.StartCoroutine(Sprites.Change(false));
 
             CreateCanvas();
 
@@ -510,6 +502,12 @@ namespace Lightbringer
 
         private void Update()
         {
+            if (enableSpells)
+            {
+                ChildOfLight.Enable();
+                enableSpells = false;
+            }
+
             if (timeFracture < 1f || PlayerData.instance.ghostCoins == 1)
             {
                 PlayerData.instance.ghostCoins = 0;
@@ -538,7 +536,7 @@ namespace Lightbringer
             {
                 if (spriteFlash == null)
                     spriteFlash = HeroController.instance.GetComponent<SpriteFlash>();
-                // Mana regen
+                
                 manaRegenTime -= settings.SoulRegenRate;
                 HeroController.instance.AddMPChargeSpa(1);
                 foreach (int i in new int[] {17, 19, 34, 30, 28, 22, 25})
@@ -582,9 +580,9 @@ namespace Lightbringer
             }
             if (AttackHandler.BeamAudioClip == null)
             {
-                GameObject BeamPrefabGameObject = ReflectionHelper.GetField<HeroController, GameObject>(HeroController.instance, "grubberFlyBeamPrefabU");
-                AudioSource BeamAudio = BeamPrefabGameObject.GetComponent<AudioSource>();
-                AttackHandler.BeamAudioClip = BeamAudio.clip;
+                GameObject beamPrefab = ReflectionHelper.GetField<HeroController, GameObject>(HeroController.instance, "grubberFlyBeamPrefabU");
+                AudioSource beamAudio = beamPrefab.GetComponent<AudioSource>();
+                AttackHandler.BeamAudioClip = beamAudio.clip;
             }
             ReflectionHelper.GetField<HeroController, AudioSource>(HeroController.instance, "audioSource").PlayOneShot(AttackHandler.BeamAudioClip, 0.1f);
             

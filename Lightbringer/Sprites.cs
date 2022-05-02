@@ -39,20 +39,19 @@ namespace Lightbringer
             }
         }
 
-        internal static IEnumerator Change(bool restore = false)
+        internal static IEnumerator Change(bool custom)
         {
             while (CharmIconList.Instance == null ||
                    GameManager.instance == null ||
                    HeroController.instance == null ||
                    HeroController.instance.geoCounter == null ||
-                   HeroController.instance.geoCounter.geoSprite == null ||
-                   customSprites.Count < 28)
+                   HeroController.instance.geoCounter.geoSprite == null)
                 yield return null;
 
             if (originalSprites == null)
                 Save();
 
-            var sprites = restore ? originalSprites : customSprites;
+            var sprites = custom ? customSprites : originalSprites;
 
             foreach (int i in new int[] { 2, 3, 4, 6, 8, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 25, 26, 35 })
                 CharmIconList.Instance.spriteList[i] = sprites["Charms." + i];
@@ -88,11 +87,11 @@ namespace Lightbringer
             spells2.GetCurrentSpriteDef().material.mainTexture = sprites["VoidSpells"].texture;
 
             var invNail = GameObject.Find("/_GameCameras/HudCamera/Inventory/Inv/Inv_Items/Nail").GetComponent<InvNailSprite>();
-            invNail.level1 = sprites[restore ? "Nail1" : "LanceInv"];
-            invNail.level2 = sprites[restore ? "Nail2" : "LanceInv"];
-            invNail.level3 = sprites[restore ? "Nail3" : "LanceInv"];
-            invNail.level4 = sprites[restore ? "Nail4" : "LanceInv"];
-            invNail.level5 = sprites[restore ? "Nail5" : "LanceInv"];
+            invNail.level1 = sprites[custom ? "LanceInv" : "Nail1"];
+            invNail.level2 = sprites[custom ? "LanceInv" : "Nail2"];
+            invNail.level3 = sprites[custom ? "LanceInv" : "Nail3"];
+            invNail.level4 = sprites[custom ? "LanceInv" : "Nail4"];
+            invNail.level5 = sprites[custom ? "LanceInv" : "Nail5"];
         }
 
         private static void Save()
