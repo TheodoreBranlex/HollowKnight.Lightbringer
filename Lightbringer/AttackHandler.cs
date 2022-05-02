@@ -26,11 +26,11 @@ namespace Lightbringer
 
         public AttackHandler(float fracture) {}
 
-        private static Random _rand => Lightbringer.Random;
+        private static Random _rand => Lightbringer.random;
 
         public void Attack(HeroController hc, AttackDirection dir)
         {
-            LightbringerSettings settings = Lightbringer.Instance.Settings;
+            Settings settings = Lightbringer.instance.settings;
             PlayerData pd = PlayerData.instance;
 
             hc.cState.altAttack = false;
@@ -202,10 +202,10 @@ namespace Lightbringer
 
                 case AttackDirection.upward:
                     // Timescale Charm #14 - TIME FRACTURE //
-                    if (pd.equippedCharm_14 && Lightbringer._timefracture < 2f)
+                    if (pd.equippedCharm_14 && Lightbringer.timeFracture < 2f)
                     {
-                        Lightbringer._timefracture += 0.1f;
-                        Lightbringer._SpriteFlash.flash(Color.white, 0.85f, 0.35f, 0f, 0.35f);
+                        Lightbringer.timeFracture += 0.1f;
+                        Lightbringer.spriteFlash.flash(Color.white, 0.85f, 0.35f, 0f, 0.35f);
                     }
 
                     // Upward Attack Charm #8 - RISING LIGHT //

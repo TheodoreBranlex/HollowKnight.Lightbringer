@@ -1,9 +1,10 @@
 using System.Collections.Generic;
+using GameLanguage = Language.Language;
 
 namespace Lightbringer {
-    public partial class Lightbringer
+    public static class Language
     {
-        private readonly Dictionary<string, string> _langDict = new Dictionary<string, string>
+        private static readonly Dictionary<string, string> langDict = new Dictionary<string, string>
         {
             #region Charm Descriptions
 
@@ -121,5 +122,10 @@ namespace Lightbringer {
 
             #endregion
         };
+
+        internal static string LangGet(string key, string sheetTitle, string orig)
+        {
+            return langDict.TryGetValue(key, out string val) ? val : GameLanguage.GetInternal(key, sheetTitle);
+        }
     }
 }

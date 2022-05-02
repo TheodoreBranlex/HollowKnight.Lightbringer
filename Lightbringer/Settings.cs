@@ -3,7 +3,7 @@
 namespace Lightbringer
 {
     [Serializable]
-    public class LightbringerSettings
+    public class Settings
     {
         // Buffed bosses
         public bool EmpressMuzznik = true;

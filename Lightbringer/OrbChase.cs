@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Lightbringer
 {
-    public class OrbChaseObject : MonoBehaviour
+    public class OrbChase : MonoBehaviour
     {
         public HealthManager target;
         public float accelerationForce;
