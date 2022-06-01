@@ -445,7 +445,7 @@ namespace Lightbringer
 
         private IEnumerator SceneLoaded(Scene arg0)
         {
-            GameManager.instance.StartCoroutine(Sprites.Change(false));
+            GameManager.instance.StartCoroutine(Sprites.Change(true));
 
             CreateCanvas();
 
