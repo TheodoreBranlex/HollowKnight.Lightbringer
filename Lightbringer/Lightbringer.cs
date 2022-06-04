@@ -44,6 +44,7 @@ namespace Lightbringer
         internal static readonly Random random = new Random();
 
         internal bool enableSpells;
+        Coroutine changeSprites;
 
         public override string GetVersion() => Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
@@ -88,7 +89,9 @@ namespace Lightbringer
             enableSpells = true;
 
             Sprites.Load();
-            GameManager.instance.StartCoroutine(Sprites.Change(true));
+            if (changeSprites != null)
+                GameManager.instance.StopCoroutine(changeSprites);
+            changeSprites = GameManager.instance.StartCoroutine(Sprites.Change(true));
 
             if (PlayerData.instance != null)
                 SaveGameSave();
@@ -169,7 +172,9 @@ namespace Lightbringer
             if (HeroController.instance)
                 ChildOfLight.Disable();
 
-            GameManager.instance.StartCoroutine(Sprites.Change(false));
+            if (changeSprites != null)
+                GameManager.instance.StopCoroutine(changeSprites);
+            changeSprites = GameManager.instance.StartCoroutine(Sprites.Change(false));
 
             if (PlayerData.instance != null)
                 BeforeSaveGameSave();
@@ -178,7 +183,7 @@ namespace Lightbringer
         private void AfterSaveGameLoad(SaveGameData data)
         {
             SaveGameSave();
-            GameManager.instance.StartCoroutine(Sprites.Change(true));
+            // GameManager.instance.StartCoroutine(Sprites.Change(true));
             enableSpells = true;
         }
 
@@ -316,7 +321,7 @@ namespace Lightbringer
             // Charm Costs
             SaveGameSave();
 
-            GameManager.instance.StartCoroutine(Sprites.Change(true));
+            // GameManager.instance.StartCoroutine(Sprites.Change(true));
 
             // Tiny Shell charm
             if (PlayerData.instance.equippedCharm_4)
@@ -445,7 +450,9 @@ namespace Lightbringer
 
         private IEnumerator SceneLoaded(Scene arg0)
         {
-            GameManager.instance.StartCoroutine(Sprites.Change(true));
+            if (changeSprites != null)
+                GameManager.instance.StopCoroutine(changeSprites);
+            changeSprites = GameManager.instance.StartCoroutine(Sprites.Change(true));
 
             CreateCanvas();
 
