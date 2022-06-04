@@ -189,7 +189,7 @@ namespace Lightbringer
             PlayerData.instance.charmCost_15 = 3;
             PlayerData.instance.charmCost_14 = 2;
             PlayerData.instance.charmCost_8 = 3;
-            PlayerData.instance.charmCost_35 = 5;
+            PlayerData.instance.charmCost_35 = 4;
             PlayerData.instance.charmCost_18 = 3;
             PlayerData.instance.charmCost_3 = 2;
             PlayerData.instance.charmCost_38 = 2;
