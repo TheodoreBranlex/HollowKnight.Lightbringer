@@ -183,7 +183,6 @@ namespace Lightbringer
         private void AfterSaveGameLoad(SaveGameData data)
         {
             SaveGameSave();
-            // GameManager.instance.StartCoroutine(Sprites.Change(true));
             enableSpells = true;
         }
 
@@ -320,8 +319,6 @@ namespace Lightbringer
         {
             // Charm Costs
             SaveGameSave();
-
-            // GameManager.instance.StartCoroutine(Sprites.Change(true));
 
             // Tiny Shell charm
             if (PlayerData.instance.equippedCharm_4)
