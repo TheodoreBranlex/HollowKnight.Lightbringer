@@ -10,6 +10,7 @@ namespace Lightbringer
     public static class Sprites
     {
         internal static Dictionary<string, Sprite> originalSprites, customSprites;
+        static Coroutine changeSprites;
 
         internal static void Load()
         {
@@ -39,17 +40,20 @@ namespace Lightbringer
             }
         }
 
-        internal static IEnumerator Change(bool custom)
+        internal static void Enable(bool custom)
         {
-            while (CharmIconList.Instance == null ||
-                   GameManager.instance == null ||
-                   HeroController.instance == null ||
-                   HeroController.instance.geoCounter == null ||
-                   HeroController.instance.geoCounter.geoSprite == null)
+            if (changeSprites != null)
+                GameManager.instance.StopCoroutine(changeSprites);
+            changeSprites = GameManager.instance.StartCoroutine(Change(custom));
+        }
+
+        private static IEnumerator Change(bool custom)
+        {
+            while (CharmIconList.Instance == null || HeroController.instance?.geoCounter?.geoSprite == null)
                 yield return null;
 
             if (originalSprites == null)
-                Save();
+                Cache();
 
             var sprites = custom ? customSprites : originalSprites;
 
@@ -94,7 +98,7 @@ namespace Lightbringer
             invNail.level5 = sprites[custom ? "LanceInv" : "Nail5"];
         }
 
-        private static void Save()
+        private static void Cache()
         {
             originalSprites = new Dictionary<string, Sprite>();
 

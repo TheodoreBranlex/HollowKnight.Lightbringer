@@ -22,8 +22,9 @@ namespace Lightbringer
         }
     }
 
-    public static class ChildOfLight
+    internal static class ChildOfLight
     {
+        static Coroutine task;
         static GameObject orbPrefab;
         static GameObject[] orbs = { null, null };
         static GameObject shotCharge;
@@ -34,8 +35,26 @@ namespace Lightbringer
         static GameObject spikeCenter;
         static List<GameObject> spikes = new List<GameObject>();
 
-        internal static void Enable()
+        internal static void Launch()
         {
+            if (task != null)
+                GameManager.instance.StopCoroutine(task);
+            task = GameManager.instance.StartCoroutine(Enable());
+        }
+
+        internal static void Cancel()
+        {
+            if (task != null)
+                GameManager.instance.StopCoroutine(task);
+            if (HeroController.instance != null)
+                Disable();
+        }
+
+        private static IEnumerator Enable()
+        {
+            while (HeroController.instance == null)
+                yield return null;
+
             var spellControl = HeroController.instance.spellControl;
             spellControl.AddAction("Focus", () => {
                 if (PlayerData.instance.equippedCharm_17)
@@ -61,7 +80,7 @@ namespace Lightbringer
             spellControl.AddAction("Q2 Land", SpawnSpike);
         }
 
-        internal static void Disable()
+        private static void Disable()
         {
             var spellControl = HeroController.instance.spellControl;
             spellControl.Fsm.Reinitialize();

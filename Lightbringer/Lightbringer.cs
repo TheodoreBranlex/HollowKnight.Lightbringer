@@ -43,9 +43,6 @@ namespace Lightbringer
 
         internal static readonly Random random = new Random();
 
-        internal bool enableSpells;
-        Coroutine changeSprites;
-
         public override string GetVersion() => Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
         public Settings settings = new Settings();
@@ -86,12 +83,10 @@ namespace Lightbringer
 
             if (preloadedObjects != null) // Else prefabs where already loaded
                 ChildOfLight.Setup(preloadedObjects);
-            enableSpells = true;
+            ChildOfLight.Launch();
 
             Sprites.Load();
-            if (changeSprites != null)
-                GameManager.instance.StopCoroutine(changeSprites);
-            changeSprites = GameManager.instance.StartCoroutine(Sprites.Change(true));
+            Sprites.Enable(true);
 
             if (PlayerData.instance != null)
                 SaveGameSave();
@@ -168,13 +163,9 @@ namespace Lightbringer
 
             ModHooks.LanguageGetHook -= Language.LangGet;
 
-            enableSpells = false;
-            if (HeroController.instance)
-                ChildOfLight.Disable();
+            ChildOfLight.Cancel();
 
-            if (changeSprites != null)
-                GameManager.instance.StopCoroutine(changeSprites);
-            changeSprites = GameManager.instance.StartCoroutine(Sprites.Change(false));
+            Sprites.Enable(false);
 
             if (PlayerData.instance != null)
                 BeforeSaveGameSave();
@@ -183,7 +174,7 @@ namespace Lightbringer
         private void AfterSaveGameLoad(SaveGameData data)
         {
             SaveGameSave();
-            enableSpells = true;
+            ChildOfLight.Launch();
         }
 
         private static void SaveGameSave(int id = 0)
@@ -447,9 +438,7 @@ namespace Lightbringer
 
         private IEnumerator SceneLoaded(Scene arg0)
         {
-            if (changeSprites != null)
-                GameManager.instance.StopCoroutine(changeSprites);
-            changeSprites = GameManager.instance.StartCoroutine(Sprites.Change(true));
+            Sprites.Enable(true);
 
             CreateCanvas();
 
@@ -499,12 +488,6 @@ namespace Lightbringer
 
         private void Update()
         {
-            if (enableSpells)
-            {
-                ChildOfLight.Enable();
-                enableSpells = false;
-            }
-
             if (timeFracture < 1f || PlayerData.instance.ghostCoins == 1)
             {
                 PlayerData.instance.ghostCoins = 0;
