@@ -202,6 +202,7 @@ namespace Lightbringer
             PlayerData.instance.charmCost_3 = 1;
             PlayerData.instance.charmCost_38 = 3;
             PlayerData.instance.nailDamage = PlayerData.instance.nailSmithUpgrades * 4 + 5;
+            PlayMakerFSM.BroadcastEvent("UPDATE NAIL DAMAGE");
         }
 
         private static void OnNewGame()
@@ -335,16 +336,6 @@ namespace Lightbringer
             // Reset time to normal
             Time.timeScale = 1f;
             timeFracture = 1f;
-
-            // BURNING PRIDE CALCULATIONS
-            pd.nailDamage = settings.NailDamage + pd.nailSmithUpgrades * settings.NailUpgradeBonus;
-            if (pd.equippedCharm_13) // Mark of Pride
-            {
-                pd.CountGameCompletion();
-                pd.nailDamage += (int)(pd.completionPercentage * settings.BurningPrideScaleFactor);
-            }
-
-            PlayMakerFSM.BroadcastEvent("UPDATE NAIL DAMAGE");
         }
 
         private static int EvaluatePanic(int amount)

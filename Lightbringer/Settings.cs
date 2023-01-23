@@ -18,7 +18,7 @@ namespace Lightbringer
         public int FragileNightmareSoulCost = 7;
 
         // Nail attack config options
-        public int NailDamage = 1;
+        public int NailDamage = 5;
         public int NailUpgradeBonus = 2;
         public float BurningPrideScaleFactor = 1 / 6f;
 

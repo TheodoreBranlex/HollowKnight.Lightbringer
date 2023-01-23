@@ -39,12 +39,11 @@ namespace Lightbringer
             #region Damage Controller
 
             // NAIL
-            pd.nailDamage = 1 + pd.nailSmithUpgrades * 2;
-            // Mark of Pride
-            if (pd.equippedCharm_13)
+            pd.nailDamage = settings.NailDamage + pd.nailSmithUpgrades * settings.NailUpgradeBonus;
+            if (pd.equippedCharm_13) // Mark of Pride
             {
                 pd.CountGameCompletion();
-                pd.nailDamage += (int) pd.completionPercentage / 9;
+                pd.nailDamage += (int)(pd.completionPercentage * settings.BurningPrideScaleFactor);
             }
 
             PlayMakerFSM.BroadcastEvent("UPDATE NAIL DAMAGE");
