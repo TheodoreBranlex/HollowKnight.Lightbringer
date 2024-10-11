@@ -1,6 +1,6 @@
 # Hollow Knight: Lightbringer
 
-Created by 753, Ported by 56 and Théodore
+Created by 753, Ported by 56 and Théodore, Child of Light by a2659802
 
 ## Feature List
 
@@ -9,6 +9,7 @@ Created by 753, Ported by 56 and Théodore
 + SOUL regenerates passively instead of from hitting enemies
 + Start out with 4 HP and 4 charm notches
 + New powerful charms that augment your ranged abilities
++ Radiant spell for those who seek the binding light that plagues our dreams
 + And more...
 
 ## Installation Instructions
